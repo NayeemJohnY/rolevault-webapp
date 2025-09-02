@@ -14,27 +14,22 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onOpen={() => setSidebarOpen(true)}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       {/* Main content */}
       <div className="lg:ml-64">
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        
         {/* Page content */}
         <main className="p-6">
           <Outlet />
         </main>
       </div>
-      
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-          data-testid="sidebar-overlay"
-        />
-      )}
+      {/* Mobile sidebar overlay (optional, keep for mobile only) */}
     </div>
   );
 };

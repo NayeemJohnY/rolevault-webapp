@@ -2,8 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Add this so relative requests go to backend
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Configure axios for single server setup
+// In production, frontend is served by backend - use relative URLs
+// In development, this can be configured via proxy or environment variables
+if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_API_URL) {
+  axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+}
 
 const AuthContext = createContext({});
 
@@ -51,11 +55,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/login', { email, password });
       const { user: userData, token } = response.data;
-      
+
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
-      
+
       toast.success(`Welcome back, ${userData.name}!`);
       return { success: true };
     } catch (error) {
@@ -69,11 +73,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/register', userData);
       const { user: newUser, token } = response.data;
-      
+
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(newUser);
-      
+
       toast.success(`Account created successfully! Welcome, ${newUser.name}!`);
       return { success: true };
     } catch (error) {

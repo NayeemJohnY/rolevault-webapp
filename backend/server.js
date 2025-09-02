@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -11,6 +12,7 @@ const apiKeyRoutes = require('./routes/apiKeys');
 const requestRoutes = require('./routes/requests');
 const fileRoutes = require('./routes/files');
 const dashboardRoutes = require('./routes/dashboard');
+const apiHealthRoutes = require('./routes/apiHealth');
 const { errorHandler } = require('./utils/responseHandler');
 
 const app = express();
@@ -40,9 +42,17 @@ app.use((req, res, next) => {
 
 // Security middleware
 app.use(helmet());
-// CORS: only allow local frontend during development/testing
+
+// CORS: Allow frontend and production domains
+const allowedOrigins = [
+  'http://localhost:3000', // Development frontend
+  'http://localhost:5000', // Production single server
+  process.env.FRONTEND_URL,
+  process.env.PRODUCTION_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -66,22 +76,30 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/apikeys', apiKeyRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use(apiHealthRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
+// Serve static frontend files in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React app build directory
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+  // Catch all handler: send back React's index.html file for any non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+  });
+} else {
+  // Development mode: just handle 404 for API routes
+  app.use('*', (req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
+}
 
 // Global error handling middleware
 app.use(errorHandler);

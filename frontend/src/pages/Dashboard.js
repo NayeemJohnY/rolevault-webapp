@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaStethoscope } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import {
   DndContext,
@@ -84,8 +85,8 @@ const Dashboard = () => {
     if (user?.role === 'admin') {
       return [
         ...baseActions,
-        { title: 'Manage Users', path: '/users', icon: '👥' },
-        { title: 'System Settings', path: '/settings', icon: '⚙️' },
+        { title: 'Manage Users', path: '/manage/users', icon: '👥' },
+        { title: 'API Health', path: '/api/health', icon: <FaStethoscope className="text-green-700 dark:text-green-300" />, external: true, label: 'API Health' },
       ];
     }
 
@@ -119,15 +120,30 @@ const Dashboard = () => {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {getQuickActions().map((action, index) => (
-            <a
-              key={index}
-              href={action.path}
-              className="flex items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-              data-testid={`quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <span className="text-2xl mr-3">{action.icon}</span>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">{action.title}</span>
-            </a>
+            action.external ? (
+              <a
+                key={index}
+                href={action.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                data-testid={`quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`}
+                title={action.title}
+              >
+                <span className="text-2xl mr-3">{action.icon}</span>
+                <span className="text-blue-700 dark:text-blue-300 font-medium">{action.label || action.title}</span>
+              </a>
+            ) : (
+              <a
+                key={index}
+                href={action.path}
+                className="flex items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                data-testid={`quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <span className="text-2xl mr-3">{action.icon}</span>
+                <span className="text-blue-700 dark:text-blue-300 font-medium">{action.title}</span>
+              </a>
+            )
           ))}
         </div>
       </div>

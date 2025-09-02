@@ -1,10 +1,41 @@
 import React, { useState, useEffect } from 'react';
+import Modal from 'react-modal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
+  const [creating, setCreating] = useState(false);
+  const openModal = () => {
+    setForm({ name: '', email: '', password: '', role: 'viewer' });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleFormChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      const response = await axios.post('/api/users', form);
+      setUsers([response.data.user, ...users]);
+      toast.success('User created successfully');
+      closeModal();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to create user');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -13,7 +44,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get('/api/users');
-  setUsers(response.data.users || []);
+      setUsers(response.data.users || []);
     } catch (error) {
       toast.error('Failed to fetch users');
     } finally {
@@ -42,7 +73,92 @@ const UserManagement = () => {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         User Management
       </h1>
-      
+      <button
+        onClick={openModal}
+        className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        data-testid="add-user-btn"
+      >
+        Add New User
+      </button>
+
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={closeModal}
+        contentLabel="Add User Modal"
+        ariaHideApp={false}
+        className="fixed inset-0 flex items-center justify-center z-50"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-40"
+      >
+        <form
+          onSubmit={handleCreateUser}
+          className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
+        >
+          <h2 className="text-xl font-bold mb-4">Add New User</h2>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleFormChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleFormChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleFormChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Role</label>
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleFormChange}
+              className="w-full px-3 py-2 border rounded"
+            >
+              <option value="viewer">Viewer</option>
+              <option value="contributor">Contributor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              {creating ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
@@ -71,11 +187,10 @@ const UserManagement = () => {
                   {userItem.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
-                    userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
+                        'bg-blue-100 text-blue-800'
+                    }`}>
                     {userItem.role}
                   </span>
                 </td>
