@@ -95,7 +95,7 @@ Before running the project, make sure you have:
 Copy `backend/.env.example` to `backend/.env` and update:
 ```bash
 PORT=5000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/rolevault?retryWrites=true&w=majority
+MONGODB_URI=mongodb_connection_string
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRE=7d
 MAX_FILE_SIZE=10485760
