@@ -11,7 +11,9 @@ import ProfileInformation from './pages/profile/ProfileInformation';
 import UserManagement from './pages/admin/UserManagement';
 import ApiKeyManagement from './pages/ApiKeyManagement';
 import Requests from './pages/Requests';
+import MyRequests from './pages/MyRequests';
 import RequestForm from './pages/RequestForm';
+import ApiHealth from './pages/ApiHealth';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -80,9 +82,17 @@ function AppRoutes() {
         } />
 
         {/* Request management */}
+        {/* Admin: review all requests */}
         <Route path="requests" element={
           <ProtectedRoute roles={['admin']}>
             <Requests />
+          </ProtectedRoute>
+        } />
+
+        {/* Users: view their own requests */}
+        <Route path="requests/mine" element={
+          <ProtectedRoute roles={['contributor', 'viewer', 'admin']}>
+            <MyRequests />
           </ProtectedRoute>
         } />
 
@@ -100,6 +110,12 @@ function AppRoutes() {
             </ProtectedRoute>
           } />
         </Route>
+        {/* API Health (admin + contributor) */}
+        <Route path="api/health" element={
+          <ProtectedRoute roles={["admin", "contributor"]}>
+            <ApiHealth />
+          </ProtectedRoute>
+        } />
       </Route>
 
       {/* Catch all */}

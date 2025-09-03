@@ -146,35 +146,6 @@
 - ❌ **Load balancing** or clustering
 - ❌ **Database backups** automation
 
-## 🚀 Getting Started
-
-```bash
-# Quick setup
-chmod +x start-app.sh && ./start-app.sh
-
-# Or manual setup (development mode - separate servers)
-cd backend && npm install && npm run seed && npm run dev
-cd frontend && npm install && npm start
-```
-
-**Access URLs:**
-
-### Production Mode (Recommended)
-```bash
-# Single server - backend serves frontend
-./start-app.sh docker
-# OR
-npm run build && npm start
-```
-- **Application**: `http://localhost:5000` (single URL for everything)
-
-### Development Mode  
-```bash
-# Separate servers for development
-./start-app.sh dev
-```
-- **Frontend Dev Server**: `http://localhost:3000` (with hot reload)
-- **Backend API**: `http://localhost:5000` (proxied through frontend)
 
 ## 🎯 Use Cases
 

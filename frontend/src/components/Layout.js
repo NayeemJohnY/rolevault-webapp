@@ -14,16 +14,17 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
+      <Sidebar
+        isOpen={sidebarOpen}
         onOpen={() => setSidebarOpen(true)}
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main content */}
-      <div className="lg:ml-64">
-        {/* Header */}
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+      {/* Header (full width) */}
+      <Header onMenuClick={() => setSidebarOpen(true)} />
+
+      {/* Main content (shift right on large screens to account for fixed sidebar) */}
+      <div className="lg:ml-20">
         {/* Page content */}
         <main className="p-6">
           <Outlet />

@@ -6,7 +6,9 @@ import {
   FunnelIcon,
   ArrowDownTrayIcon,
   DocumentIcon,
-  TrashIcon
+  TrashIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatFileSize, formatDate } from '../../utils/helpers';
@@ -85,6 +87,21 @@ const DownloadFile = () => {
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Failed to delete file');
+    }
+  };
+
+  const toggleFileVisibility = async (fileId, currentVisibility) => {
+    try {
+      await axios.put(`/api/files/${fileId}`, {
+        isPublic: !currentVisibility
+      });
+      setFiles(files.map(f =>
+        f._id === fileId ? { ...f, isPublic: !currentVisibility } : f
+      ));
+      toast.success(`File visibility changed to ${!currentVisibility ? 'public' : 'private'}`);
+    } catch (error) {
+      console.error('Toggle visibility error:', error);
+      toast.error('Failed to change file visibility');
     }
   };
 
@@ -219,6 +236,17 @@ const DownloadFile = () => {
                         >
                           <ArrowDownTrayIcon className="w-4 h-4" />
                         </button>
+
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => toggleFileVisibility(file._id, file.isPublic)}
+                            className={`${file.isPublic ? 'text-green-600 hover:text-green-900 dark:text-green-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400'}`}
+                            title={file.isPublic ? 'Make Private' : 'Make Public'}
+                            data-testid={`toggle-visibility-${file._id}`}
+                          >
+                            {file.isPublic ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+                          </button>
+                        )}
 
                         {user?.role === 'admin' || file.uploadedBy?._id === user?._id ? (
                           <button

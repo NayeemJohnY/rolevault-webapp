@@ -1,19 +1,18 @@
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const ProfileInformation = () => {
     const { updateProfile, user } = useAuth();
     // Avatar upload state
-    const [avatar, setAvatar] = useState(null);
-    const [avatarPreview, setAvatarPreview] = useState(null);
+    // Initialize avatarPreview from user.profileImage if available
+    const [avatarPreview, setAvatarPreview] = useState(user?.profileImage || null);
     const avatarInputRef = useRef();
     // Avatar upload handler
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setAvatar(file);
             const reader = new FileReader();
             reader.onloadend = async () => {
                 setAvatarPreview(reader.result);
@@ -32,6 +31,46 @@ const ProfileInformation = () => {
             reader.readAsDataURL(file);
         }
     };
+
+    // Keep avatarPreview in sync if user.profileImage changes (e.g., from other parts of the app)
+    React.useEffect(() => {
+        setAvatarPreview(user?.profileImage || null);
+    }, [user?.profileImage]);
+
+    // Initialize form with current user data when user is available
+    React.useEffect(() => {
+        if (!user) return;
+
+        const name = user.name || '';
+        const hasFirst = user.firstName || false;
+        let firstName = '';
+        let lastName = '';
+        if (hasFirst) {
+            firstName = user.firstName || '';
+            lastName = user.lastName || '';
+        } else if (name) {
+            const parts = name.split(' ');
+            firstName = parts.shift() || '';
+            lastName = parts.join(' ') || '';
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            firstName,
+            lastName,
+            email: user.email || prev.email,
+            phone: user.phone || prev.phone,
+            country: user.country || prev.country,
+            skills: user.skills || prev.skills,
+            experience: user.experience || prev.experience,
+            interests: user.interests || prev.interests,
+            newsletter: user.newsletter || prev.newsletter,
+            birthDate: user.birthDate || prev.birthDate,
+            portfolio: user.portfolio || prev.portfolio,
+            bio: user.bio || prev.bio,
+            priority: user.priority || prev.priority
+        }));
+    }, [user]);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -156,13 +195,42 @@ const ProfileInformation = () => {
                         onChange={handleAvatarChange}
                         style={{ display: 'none' }}
                     />
-                    <button
-                        type="button"
-                        className="btn-primary"
-                        onClick={() => avatarInputRef.current.click()}
-                    >
-                        {avatarPreview ? 'Change Photo' : 'Upload Photo'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={() => avatarInputRef.current.click()}
+                            data-testid="upload-photo-btn"
+                        >
+                            {avatarPreview ? 'Change Photo' : 'Upload Photo'}
+                        </button>
+
+                        {avatarPreview && (
+                            <button
+                                type="button"
+                                className="btn-ghost text-sm text-red-600 dark:text-red-400"
+                                onClick={async () => {
+                                    if (!window.confirm('Remove profile photo?')) return;
+                                    try {
+                                        const result = await updateProfile({ profileImage: null });
+                                        if (result.success) {
+                                            setAvatarPreview(null);
+                                            // clear file input
+                                            if (avatarInputRef.current) avatarInputRef.current.value = null;
+                                            toast.success('Profile photo removed');
+                                        } else {
+                                            toast.error(result.error || 'Failed to remove profile photo');
+                                        }
+                                    } catch (err) {
+                                        toast.error('Failed to remove profile photo');
+                                    }
+                                }}
+                                data-testid="remove-photo-btn"
+                            >
+                                Remove Photo
+                            </button>
+                        )}
+                    </div>
                 </div>
                 {avatarPreview && (
                     <img
@@ -218,9 +286,10 @@ const ProfileInformation = () => {
                                 id="email"
                                 name="email"
                                 required
-                                className="form-input"
+                                className="form-input bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
                                 value={formData.email}
                                 onChange={handleInputChange}
+                                disabled
                                 data-testid="email-input"
                             />
                         </div>

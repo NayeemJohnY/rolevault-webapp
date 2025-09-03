@@ -7,7 +7,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const RequestForm = () => {
   const [formData, setFormData] = useState({
-    type: 'api_key',
+    // default to feature_access to avoid API key being selected by default
+    type: 'feature_access',
     title: '',
     description: '',
     priority: 'medium',
@@ -17,15 +18,11 @@ const RequestForm = () => {
   const navigate = useNavigate();
 
   const requestTypes = [
+    // API Key option will be conditionally shown based on user role
     {
       value: 'api_key',
       label: 'API Key Request',
       description: 'Request a new API key or additional permissions'
-    },
-    {
-      value: 'file_publish',
-      label: 'File Publishing',
-      description: 'Request to make files publicly accessible'
     },
     {
       value: 'role_upgrade',
@@ -100,49 +97,52 @@ const RequestForm = () => {
           </h3>
 
           <div className="grid grid-cols-1 gap-3">
-            {requestTypes.map((type) => (
-              <label
-                key={type.value}
-                className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${formData.type === type.value
+            {requestTypes
+              // If current user is a viewer, hide API key requests from the options
+              .filter(t => t.value !== 'api_key' || !window.__APP_USER_ROLE__ || window.__APP_USER_ROLE__ !== 'viewer')
+              .map((type) => (
+                <label
+                  key={type.value}
+                  className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${formData.type === type.value
                     ? 'border-primary-600 ring-2 ring-primary-600 bg-primary-50 dark:bg-primary-900/20'
                     : 'border-gray-300 dark:border-gray-600'
-                  }`}
-              >
-                <input
-                  type="radio"
-                  name="type"
-                  value={type.value}
-                  checked={formData.type === type.value}
-                  onChange={handleChange}
-                  className="sr-only"
-                  data-testid={`request-type-${type.value}`}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center">
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {type.label}
-                      </div>
-                      <div className="text-gray-500 dark:text-gray-400">
-                        {type.description}
+                    }`}
+                >
+                  <input
+                    type="radio"
+                    name="type"
+                    value={type.value}
+                    checked={formData.type === type.value}
+                    onChange={handleChange}
+                    className="sr-only"
+                    data-testid={`request-type-${type.value}`}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {type.label}
+                        </div>
+                        <div className="text-gray-500 dark:text-gray-400">
+                          {type.description}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center h-5">
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 ${formData.type === type.value
+                  <div className="flex items-center h-5">
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${formData.type === type.value
                         ? 'border-primary-600 bg-primary-600'
                         : 'border-gray-300'
-                      }`}
-                  >
-                    {formData.type === type.value && (
-                      <div className="w-2 h-2 rounded-full bg-white m-0.5"></div>
-                    )}
+                        }`}
+                    >
+                      {formData.type === type.value && (
+                        <div className="w-2 h-2 rounded-full bg-white m-0.5"></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </label>
-            ))}
+                </label>
+              ))}
           </div>
         </div>
 

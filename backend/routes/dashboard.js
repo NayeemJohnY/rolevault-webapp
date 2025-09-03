@@ -12,23 +12,33 @@ router.get('/', authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
     const userRole = req.user.role;
-    
+
     let dashboardData = {
       user: req.user,
       widgets: []
     };
 
-    // Common widgets for all users
+    // Pending requests widget - show for all roles (filtered by role)
+    let pendingRequestsQuery = { status: 'pending' };
+    if (userRole !== 'admin') {
+      // Non-admins see only their own pending requests
+      pendingRequestsQuery.requestedBy = userId;
+    }
+
+    const pendingRequests = await Request.find(pendingRequestsQuery)
+      .populate('requestedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('title type priority createdAt requestedBy');
+
     dashboardData.widgets.push({
-      id: 'profile-summary',
-      type: 'profile',
-      title: 'Profile Summary',
+      id: 'pending-requests',
+      type: 'requests',
+      title: 'Pending Requests',
       data: {
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-        lastLogin: req.user.lastLogin,
-        joinDate: req.user.createdAt
+        requests: pendingRequests,
+        count: pendingRequests.length,
+        isAdmin: userRole === 'admin'
       }
     });
 
@@ -48,99 +58,8 @@ router.get('/', authenticate, async (req, res) => {
     dashboardData.widgets.push({
       id: 'file-stats',
       type: 'stats',
-      title: 'My Files',
+      title: 'File Statistics',
       data: fileStats[0] || { totalFiles: 0, totalSize: 0, totalDownloads: 0 }
-    });
-
-    // Role-specific widgets
-    if (userRole === 'admin') {
-      // Admin-specific widgets
-      const userStats = await User.aggregate([
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            active: { $sum: { $cond: ['$isActive', 1, 0] } },
-            admins: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
-            contributors: { $sum: { $cond: [{ $eq: ['$role', 'contributor'] }, 1, 0] } },
-            viewers: { $sum: { $cond: [{ $eq: ['$role', 'viewer'] }, 1, 0] } }
-          }
-        }
-      ]);
-
-      dashboardData.widgets.push({
-        id: 'user-stats',
-        type: 'admin-stats',
-        title: 'User Management',
-        data: userStats[0] || { total: 0, active: 0, admins: 0, contributors: 0, viewers: 0 }
-      });
-
-      const pendingRequests = await Request.countDocuments({ status: 'pending' });
-      dashboardData.widgets.push({
-        id: 'pending-requests',
-        type: 'notification',
-        title: 'Pending Requests',
-        data: { count: pendingRequests }
-      });
-
-      const apiKeyStats = await ApiKey.aggregate([
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            active: { $sum: { $cond: ['$isActive', 1, 0] } },
-            totalRequests: { $sum: '$usage.totalRequests' }
-          }
-        }
-      ]);
-
-      dashboardData.widgets.push({
-        id: 'api-key-stats',
-        type: 'stats',
-        title: 'API Keys Overview',
-        data: apiKeyStats[0] || { total: 0, active: 0, totalRequests: 0 }
-      });
-    }
-
-    if (userRole === 'contributor' || userRole === 'admin') {
-      // API key stats for contributors and admins
-      const myApiKeys = await ApiKey.find({ userId }).countDocuments();
-      const myRequests = await Request.find({ requestedBy: userId }).countDocuments();
-
-      dashboardData.widgets.push({
-        id: 'my-api-keys',
-        type: 'stats',
-        title: 'My API Keys',
-        data: { count: myApiKeys }
-      });
-
-      dashboardData.widgets.push({
-        id: 'my-requests',
-        type: 'stats',
-        title: 'My Requests',
-        data: { count: myRequests }
-      });
-    }
-
-    // Recent activity for all users
-    const recentFiles = await File.find({ uploadedBy: userId })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('originalName createdAt');
-
-    dashboardData.widgets.push({
-      id: 'recent-activity',
-      type: 'activity',
-      title: 'Recent Activity',
-      data: { recentFiles }
-    });
-
-    // Theme widget for all users
-    dashboardData.widgets.push({
-      id: 'theme-switcher',
-      type: 'theme',
-      title: 'Theme Settings',
-      data: { currentTheme: req.user.preferences?.theme || 'light' }
     });
 
     res.json(dashboardData);
@@ -192,7 +111,7 @@ router.get('/activity', authenticate, async (req, res) => {
 router.patch('/theme', authenticate, async (req, res) => {
   try {
     const { theme } = req.body;
-    
+
     if (!['light', 'dark'].includes(theme)) {
       return res.status(400).json({ message: 'Invalid theme. Must be light or dark.' });
     }

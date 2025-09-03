@@ -4,8 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-require('dotenv').config();
-
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const apiKeyRoutes = require('./routes/apiKeys');
@@ -43,11 +42,9 @@ app.use((req, res, next) => {
 // Security middleware
 app.use(helmet());
 
-// CORS: Allow frontend and production domains
+// CORS: Allow access from same origin (single server)
 const allowedOrigins = [
-  'http://localhost:3000', // Development frontend
-  'http://localhost:5000', // Production single server
-  process.env.FRONTEND_URL,
+  'http://localhost:5000', // Single server
   process.env.PRODUCTION_URL
 ].filter(Boolean);
 
@@ -59,7 +56,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 1000 // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
 
@@ -67,8 +64,8 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static files for uploads
-app.use('/uploads', express.static('uploads'));
+// Static files for uploads (use absolute backend/uploads path)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -85,21 +82,11 @@ app.use('/api/files', fileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use(apiHealthRoutes);
 
-// Serve static frontend files in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the React app build directory
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-  // Catch all handler: send back React's index.html file for any non-API routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
-  });
-} else {
-  // Development mode: just handle 404 for API routes
-  app.use('*', (req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-  });
-}
+// Always serve static frontend files for all non-API routes
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
 
 // Global error handling middleware
 app.use(errorHandler);

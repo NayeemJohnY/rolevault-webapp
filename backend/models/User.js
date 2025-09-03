@@ -36,6 +36,60 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // UI / profile fields used by frontend
+  firstName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  lastName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  phone: {
+    type: String,
+    default: ''
+  },
+  country: {
+    type: String,
+    default: ''
+  },
+  skills: [{
+    type: String
+  }],
+  experience: {
+    type: String,
+    enum: ['Entry Level', 'Mid Level', 'Senior Level', 'Executive', ''],
+    default: ''
+  },
+  interests: [{
+    type: String
+  }],
+  newsletter: {
+    type: Boolean,
+    default: false
+  },
+  birthDate: {
+    type: Date
+  },
+  portfolio: {
+    type: String,
+    default: ''
+  },
+  bio: {
+    type: String,
+    default: ''
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  // Persist user's selected dashboard widgets (array of widget ids)
+  dashboardWidgets: [{
+    type: String
+  }],
   preferences: {
     theme: {
       type: String,
@@ -52,9 +106,9 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
@@ -65,12 +119,12 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Get user without password
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
   return user;

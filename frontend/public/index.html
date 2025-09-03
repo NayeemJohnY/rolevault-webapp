@@ -12,6 +12,16 @@
 
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script>
+        // Expose a simple global for UI-only role checks. This reads a 'user_role' value
+        // from localStorage if the app stored it at login. This is only used to hide
+        // the API key option in the Request form for viewers.
+        try {
+            window.__APP_USER_ROLE__ = localStorage.getItem('user_role') || null;
+        } catch (e) {
+            window.__APP_USER_ROLE__ = null;
+        }
+    </script>
     <div id="root"></div>
 </body>
 

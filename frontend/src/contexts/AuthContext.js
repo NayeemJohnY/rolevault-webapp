@@ -2,12 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Configure axios for single server setup
-// In production, frontend is served by backend - use relative URLs
-// In development, this can be configured via proxy or environment variables
-if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_API_URL) {
-  axios.defaults.baseURL = process.env.REACT_APP_API_URL;
-}
 
 const AuthContext = createContext({});
 
@@ -39,6 +33,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const response = await axios.get('/api/auth/me');
           setUser(response.data.user);
+          try { localStorage.setItem('user_role', response.data.user.role); } catch (e) { }
         } catch (error) {
           console.error('Auth check failed:', error);
           localStorage.removeItem('token');
@@ -57,6 +52,7 @@ export const AuthProvider = ({ children }) => {
       const { user: userData, token } = response.data;
 
       localStorage.setItem('token', token);
+      try { localStorage.setItem('user_role', userData.role); } catch (e) { }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
 
@@ -75,6 +71,7 @@ export const AuthProvider = ({ children }) => {
       const { user: newUser, token } = response.data;
 
       localStorage.setItem('token', token);
+      try { localStorage.setItem('user_role', newUser.role); } catch (e) { }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(newUser);
 
@@ -89,16 +86,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    try { localStorage.removeItem('user_role'); } catch (e) { }
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     toast.success('Logged out successfully');
   };
 
-  const updateProfile = async (updates) => {
+  const updateProfile = async (updates, showToast = true) => {
     try {
       const response = await axios.put('/api/auth/me', updates);
       setUser(response.data.user);
-      toast.success('Profile updated successfully');
+      try { localStorage.setItem('user_role', response.data.user.role); } catch (e) { }
+      if (showToast) {
+        toast.success('Profile updated successfully');
+      }
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Profile update failed';

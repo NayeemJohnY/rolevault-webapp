@@ -9,13 +9,12 @@ const router = express.Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, type } = req.query;
-    
+
     // Build filter based on user role
     const filter = {};
-    if (req.user.role !== 'admin') {
-      filter.requestedBy = req.user._id;
-    }
-    
+    // Always filter by user for this endpoint (My Requests)
+    filter.requestedBy = req.user._id;
+
     if (status) filter.status = status;
     if (type) filter.type = type;
 
@@ -42,11 +41,41 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Get request by ID
+// Get all requests for admin review (Admin only)
+router.get('/admin/review', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, type } = req.query;
+
+    const filter = {};
+    if (status) filter.status = status;
+    if (type) filter.type = type;
+
+    const requests = await Request.find(filter)
+      .populate('requestedBy', 'name email role')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Request.countDocuments(filter);
+
+    res.json({
+      requests,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching requests for review:', error);
+    res.status(500).json({ message: 'Error fetching requests for review' });
+  }
+});// Get request by ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
-    
+
     // Non-admin users can only see their own requests
     if (req.user.role !== 'admin') {
       filter.requestedBy = req.user._id;
@@ -55,7 +84,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const request = await Request.findOne(filter)
       .populate('requestedBy', 'name email role')
       .populate('reviewedBy', 'name email');
-    
+
     if (!request) {
       return res.status(404).json({ message: 'Request not found' });
     }
@@ -68,12 +97,16 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Create new request
-router.post('/', 
-  authenticate, 
-  adminOrContributor,
-  validate('request'), 
+// Allow any authenticated user (including viewers) to submit requests.
+router.post('/',
+  authenticate,
+  validate('request'),
   async (req, res) => {
     try {
+      // Viewers are allowed to submit regular requests but not API key requests
+      if (req.user.role === 'viewer' && req.body.type === 'api_key') {
+        return res.status(403).json({ message: 'Viewers are not permitted to request API keys.' });
+      }
       const { type, title, description, priority = 'medium', metadata = {} } = req.body;
 
       const request = new Request({
@@ -100,7 +133,8 @@ router.post('/',
 );
 
 // Update request (only for pending requests by the requester)
-router.put('/:id', authenticate, adminOrContributor, async (req, res) => {
+// Allow the original requester (including viewers) to update their pending requests.
+router.put('/:id', authenticate, async (req, res) => {
   try {
     const request = await Request.findOne({
       _id: req.params.id,
@@ -109,14 +143,14 @@ router.put('/:id', authenticate, adminOrContributor, async (req, res) => {
     });
 
     if (!request) {
-      return res.status(404).json({ 
-        message: 'Request not found or cannot be modified' 
+      return res.status(404).json({
+        message: 'Request not found or cannot be modified'
       });
     }
 
     const { title, description, priority, metadata } = req.body;
     const updates = {};
-    
+
     if (title) updates.title = title;
     if (description) updates.description = description;
     if (priority) updates.priority = priority;
@@ -137,9 +171,9 @@ router.put('/:id', authenticate, adminOrContributor, async (req, res) => {
 });
 
 // Review request (Admin only)
-router.patch('/:id/review', 
-  authenticate, 
-  adminOnly, 
+router.patch('/:id/review',
+  authenticate,
+  adminOnly,
   validate('request'),
   async (req, res) => {
     try {
@@ -151,8 +185,8 @@ router.patch('/:id/review',
       });
 
       if (!request) {
-        return res.status(404).json({ 
-          message: 'Request not found or already reviewed' 
+        return res.status(404).json({
+          message: 'Request not found or already reviewed'
         });
       }
 
@@ -179,7 +213,7 @@ router.patch('/:id/review',
 router.delete('/:id', authenticate, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
-    
+
     // Admin can delete any request, users can only delete their own pending requests
     if (req.user.role !== 'admin') {
       filter.requestedBy = req.user._id;
@@ -187,10 +221,10 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
 
     const request = await Request.findOneAndDelete(filter);
-    
+
     if (!request) {
-      return res.status(404).json({ 
-        message: 'Request not found or cannot be deleted' 
+      return res.status(404).json({
+        message: 'Request not found or cannot be deleted'
       });
     }
 
@@ -205,7 +239,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 router.get('/stats/pending', authenticate, adminOnly, async (req, res) => {
   try {
     const pendingCount = await Request.countDocuments({ status: 'pending' });
-    
+
     const recentRequests = await Request.find({ status: 'pending' })
       .populate('requestedBy', 'name email')
       .sort({ createdAt: -1 })

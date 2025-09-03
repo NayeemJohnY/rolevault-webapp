@@ -78,7 +78,7 @@ router.get('/me', authenticate, handleAsync(async (req, res) => {
 
 // Update user profile
 router.put('/me', authenticate, validate('user', { isUpdate: true }), handleAsync(async (req, res) => {
-  const allowedUpdates = ['name', 'preferences', 'profileImage'];
+  const allowedUpdates = ['name', 'preferences', 'profileImage', 'firstName', 'lastName', 'phone', 'country', 'skills', 'experience', 'interests', 'newsletter', 'birthDate', 'portfolio', 'bio', 'priority', 'dashboardWidgets'];
   const updates = {};
 
   allowedUpdates.forEach(field => {

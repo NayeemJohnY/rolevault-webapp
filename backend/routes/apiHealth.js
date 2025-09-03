@@ -1,6 +1,7 @@
 // API Health Endpoint: Returns all backend API routes and supported HTTP methods
 const express = require('express');
 const router = express.Router();
+const { adminOrContributor, authenticate } = require('../middleware/auth');
 
 
 // List of all API endpoints with metadata
@@ -137,9 +138,10 @@ function filterEndpointsByRole(endpoints, role) {
     })).filter(cat => cat.routes.length > 0);
 }
 
-// GET /api/health?role=admin|contributor|viewer&category=...
-router.get('/api/health', (req, res) => {
-    const role = req.query.role || 'viewer';
+// GET /api/health (authenticated) - only admin or contributor
+router.get('/api/health', adminOrContributor, (req, res) => {
+    // Use the authenticated user's role for filtering
+    const role = req.user?.role || 'viewer';
     const categoryFilter = req.query.category;
     let endpoints = filterEndpointsByRole(apiEndpoints, role);
     if (categoryFilter) {

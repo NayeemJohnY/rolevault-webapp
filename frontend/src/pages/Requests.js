@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { formatDate } from '../utils/helpers';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -14,7 +15,7 @@ const Requests = () => {
 
   const fetchRequests = async () => {
     try {
-      const response = await axios.get('/api/requests');
+      const response = await axios.get('/api/requests/admin/review');
       setRequests(response.data.requests);
     } catch (error) {
       toast.error('Failed to fetch requests');
@@ -25,7 +26,9 @@ const Requests = () => {
 
   const approveRequest = async (requestId) => {
     try {
-      await axios.put(`/api/requests/${requestId}/approve`);
+      await axios.patch(`/api/requests/${requestId}/review`, {
+        status: 'approved'
+      });
       setRequests(requests.map(req =>
         req._id === requestId ? { ...req, status: 'approved' } : req
       ));
@@ -37,9 +40,11 @@ const Requests = () => {
 
   const rejectRequest = async (requestId) => {
     try {
-      await axios.put(`/api/requests/${requestId}/reject`);
+      await axios.patch(`/api/requests/${requestId}/review`, {
+        status: 'denied'
+      });
       setRequests(requests.map(req =>
-        req._id === requestId ? { ...req, status: 'rejected' } : req
+        req._id === requestId ? { ...req, status: 'denied' } : req
       ));
       toast.success('Request rejected');
     } catch (error) {
@@ -53,7 +58,6 @@ const Requests = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6" data-testid="requests">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Requests</h1>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         Requests Management
       </h1>
@@ -75,6 +79,12 @@ const Requests = () => {
                 Submitted By
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Submitted
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Last Modified
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -90,14 +100,20 @@ const Requests = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      request.status === 'denied' ? 'bg-red-100 text-red-800' :
                         'bg-yellow-100 text-yellow-800'
                     }`}>
                     {request.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {request.submittedBy?.name || 'Unknown'}
+                  {request.requestedBy?.name || 'Unknown'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  {formatDate(request.createdAt)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  {formatDate(request.updatedAt || request.reviewedAt || request.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   {request.status === 'pending' && user?.role === 'admin' && (

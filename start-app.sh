@@ -1,77 +1,45 @@
 #!/bin/bash
 
-# Start the app using background processes (no PM2)
-# This script will:
-# - install dependencies for backend and frontend
-# - start backend and frontend in background
-# - save process IDs for easy stopping
+# Start script for RoleVault - Single Server Implementation with PM2
+# Backend serves frontend on same port (5000)
 
 set -e
 
-APP_ROOT="$(cd "$(dirname "$0")" && pwd)"
-echo "📁 Project root: $APP_ROOT"
+echo "🚀 Starting RoleVault with PM2..."
 
-echo "🚀 Starting RoleVault with background processes..."
-
-echo "📦 Checking backend dependencies..."
-cd "$APP_ROOT/backend"
-if [ ! -d "node_modules" ]; then
-	echo "📥 node_modules not found in backend — installing..."
-	npm ci || npm install
-else
-	echo "✅ backend node_modules present — running npm update"
-	npm update
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    echo "❌ PM2 not found. Installing PM2..."
+    npm install -g pm2
 fi
 
-echo "📦 Checking frontend dependencies..."
-cd "$APP_ROOT/frontend"
-if [ ! -d "node_modules" ]; then
-	echo "📥 node_modules not found in frontend — installing..."
-	npm ci || npm install
-else
-	echo "✅ frontend node_modules present — running npm update"
-	npm update
+# Install dependencies
+echo "📦 Installing dependencies..."
+if [ ! -d "backend/node_modules" ]; then
+    echo "Installing backend dependencies..."
+    cd backend && npm install && cd ..
 fi
 
-echo "✅ Dependency check complete."
-
-# Stop any existing processes
-echo "⏹️ Stopping existing processes (if any)"
-pkill -f "npm run dev" >/dev/null 2>&1 || true
-pkill -f "npm start" >/dev/null 2>&1 || true
-pkill -f "react-scripts start" >/dev/null 2>&1 || true
-
-echo "🌐 Starting backend in background"
-cd "$APP_ROOT/backend"
-nohup npm run dev > backend.log 2>&1 &
-BACKEND_PID=$!
-echo $BACKEND_PID > backend.pid
-echo "  Backend PID: $BACKEND_PID"
-
-echo "⚛️ Starting frontend in background"
-cd "$APP_ROOT/frontend"
-nohup npm start > frontend.log 2>&1 &
-FRONTEND_PID=$!
-echo $FRONTEND_PID > frontend.pid
-echo "  Frontend PID: $FRONTEND_PID"
-
-echo "✅ Applications started in background"
-echo "  - Backend: http://localhost:5000 (PID: $BACKEND_PID)"
-echo "  - Frontend: http://localhost:3000 (PID: $FRONTEND_PID)"
-echo "  - Backend logs: $APP_ROOT/backend/backend.log"
-echo "  - Frontend logs: $APP_ROOT/frontend/frontend.log"
-echo "To stop: run ./stop-app.sh"
-
-# Wait a moment and check if processes are running
-sleep 3
-if kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "✅ Backend is running"
-else
-    echo "❌ Backend failed to start - check backend.log"
+if [ ! -d "frontend/node_modules" ]; then
+    echo "Installing frontend dependencies..."
+    cd frontend && npm install && cd ..
 fi
 
-if kill -0 $FRONTEND_PID 2>/dev/null; then
-    echo "✅ Frontend is running"
-else
-    echo "❌ Frontend failed to start - check frontend.log"
-fi
+# Build frontend
+echo "🔨 Building frontend..."
+cd frontend && npm run build && cd ..
+
+# Start backend with PM2 (serves frontend)
+echo "🚀 Starting server with PM2..."
+cd backend
+pm2 start server.js --name rolevault-app
+cd ..
+
+# Save PM2 process list
+pm2 save
+
+echo "✅ RoleVault started successfully!"
+echo "🌐 App: http://localhost:5000"
+echo "📋 PM2 status: pm2 status"
+echo "📋 Logs: pm2 logs rolevault-app"
+echo "🛑 Stop: ./stop-app.sh"

@@ -2,11 +2,13 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const ApiKey = require('../models/ApiKey');
 const Request = require('../models/Request');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 async function seedData() {
   try {
     // Connect to MongoDB
+    console.log(process.env)
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 

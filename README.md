@@ -17,29 +17,125 @@
 
 ## 🚀 Quick Start
 
+### Method 1: Using Scripts with PM2 (Recommended)
 ```bash
-# Setup everything
-chmod +x setup.sh && ./setup.sh
+# Make scripts executable (Linux/Mac)
+chmod +x start-app.sh stop-app.sh
 
-# Start development
+# Start the application
 ./start-app.sh
+
+# Access the app
+# Open http://localhost:5000 in your browser
+
+# To stop
+./stop-app.sh
 ```
 
-Or manual setup:
+### Method 2: Using npm scripts
+```bash
+# Install all dependencies
+npm run install:all
+
+# Build frontend and start single server
+npm start
+
+# Access: http://localhost:5000
+# Stop with Ctrl+C
+```
+
+### Method 3: Manual setup (Step by step)
+
+### Method 3: Manual setup (Step by step)
 
 ```bash
-# Backend
+# 1. Install backend dependencies
 cd backend
 npm install
-cp .env.example .env  # Edit .env with your MongoDB connection
-npm run seed          # Create test users
-npm run dev           # Start backend
+
+# 2. Setup environment
+cp .env.example .env
+# Edit .env file with your MongoDB Atlas connection string
+
+# 3. Seed the database (create test users)
+npm run seed
+
+# 4. Install frontend dependencies
+cd ../frontend
+npm install
+
+# 5. Build frontend
+npm run build
+
+# 6. Start backend server (serves frontend)
+cd ../backend
+npm start
+
+# Access: http://localhost:5000
+```
+
+## 🔧 Prerequisites
+
+Before running the project, make sure you have:
+
+1. **Node.js** (v16 or higher) and **npm**
+2. **PM2** (will be auto-installed if not present)
+3. **MongoDB Atlas account** (cloud database)
+
+## ⚙️ Environment Setup
+
+### MongoDB Atlas Setup
+1. Create account at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a new cluster (free tier works fine)
+3. Create a database user with read/write permissions
+4. Whitelist your IP address (or use `0.0.0.0/0` for development)
+5. Get your connection string
+
+### Environment Variables
+Copy `backend/.env.example` to `backend/.env` and update:
+```bash
+PORT=5000
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/rolevault?retryWrites=true&w=majority
+JWT_SECRET=your_super_secret_jwt_key_here
+JWT_EXPIRE=7d
+MAX_FILE_SIZE=10485760
+```
+
+## 📋 PM2 Process Management
+
+Once started with `./start-app.sh`, you can manage the application using PM2 commands:
+
+```bash
+# View running processes
+pm2 status
+
+# View logs
+pm2 logs rolevault-app
+
+# View real-time logs
+pm2 logs rolevault-app --lines 50
+
+# Restart the app
+pm2 restart rolevault-app
+
+# Stop the app
+pm2 stop rolevault-app
+
+# Delete the app from PM2
+pm2 delete rolevault-app
+
+# Save PM2 process list (auto-restart after reboot)
+pm2 save
+pm2 startup
+```
 
 # Frontend
 cd frontend
 npm install
 npm start             # Start React frontend
 ```
+
+**Access:** `http://localhost:5000`
 
 ## 👤 User Roles & Test Users
 

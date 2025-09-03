@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   Bars3Icon,
   BellIcon,
   SunIcon,
-  MoonIcon,
-  UserCircleIcon
+  MoonIcon
 } from '@heroicons/react/24/outline';
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
 
   // Log user and theme info on mount
   React.useEffect(() => {
@@ -45,7 +46,7 @@ const Header = ({ onMenuClick }) => {
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16">
-      <div className="flex items-center justify-between h-full px-6">
+      <div className="flex items-center justify-between h-full px-6 lg:pl-64">
         {/* Left side */}
         <div className="flex items-center space-x-4">
           <button
@@ -56,10 +57,11 @@ const Header = ({ onMenuClick }) => {
             <Bars3Icon className="w-6 h-6" />
           </button>
 
+          {/* MyVault header logo/title */}
           <div className="hidden lg:block">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Welcome back, {user?.name}!
-            </h2>
+            <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-300 tracking-tight" data-testid="page-header-logo">
+              MyVault
+            </h1>
           </div>
         </div>
 
@@ -132,22 +134,45 @@ const Header = ({ onMenuClick }) => {
           {/* User avatar with dropdown */}
           <div className="relative group">
             <button
-              className="flex items-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-label="Profile"
               tabIndex={0}
             >
+              {/* User Avatar: show uploaded image when available */}
               {user?.profileImage ? (
                 <img
                   src={user.profileImage}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border-2 border-primary-500"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary-500"
                 />
               ) : (
-                <UserCircleIcon className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
               )}
+
+              {/* User Info - Show on desktop */}
+              <div className="hidden lg:block text-left">
+                <p className="text-sm font-medium text-gray-900 dark:text-white" data-testid="header-user-name">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize" data-testid="header-user-role">
+                  {user?.role}
+                </p>
+              </div>
             </button>
             {/* Dropdown menu */}
-            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+              <div
+                className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate('/profile')}
+                onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/profile'); }}
+              >
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+              </div>
               <button
                 onClick={() => {
                   if (window.confirm('Are you sure you want to logout?')) {

@@ -13,6 +13,9 @@ const schemas = {
       notifications: Joi.boolean().optional()
     }).optional(),
     profileImage: Joi.string().allow(null, '').optional()
+    ,
+    // Allow dashboardWidgets (array of widget IDs) when updating profile, but disallow on create
+    dashboardWidgets: Joi.array().items(Joi.string()).when('$isUpdate', { is: true, then: Joi.optional(), otherwise: Joi.forbidden() })
   }),
 
   login: Joi.object({

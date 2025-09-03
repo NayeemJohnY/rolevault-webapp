@@ -11,7 +11,8 @@ const router = express.Router();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = 'uploads';
+    // Use an absolute uploads directory so saved file.path is reliable
+    const uploadDir = path.join(__dirname, '..', 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -43,6 +44,18 @@ const upload = multer({
   }
 });
 
+// Helper: try a few candidate locations for a stored file path and return the first that exists
+function resolveFilePath(storedPath, filename) {
+  const candidates = [
+    storedPath,
+    path.join(__dirname, '..', storedPath || ''),
+    path.join(process.cwd(), storedPath || ''),
+    path.join(process.cwd(), 'uploads', filename || '')
+  ];
+
+  return candidates.find(p => p && fs.existsSync(p));
+}
+
 // Upload file
 router.post('/upload', authenticate, upload.single('file'), async (req, res) => {
   try {
@@ -51,7 +64,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
     }
 
     const { description = '', tags = '', isPublic = false } = req.body;
-    
+
     // Parse tags
     const parsedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
 
@@ -80,7 +93,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    
+
     console.error('Error uploading file:', error);
     res.status(500).json({ message: 'Error uploading file' });
   }
@@ -90,7 +103,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
 router.get('/', authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 10, search, type, isPublic } = req.query;
-    
+
     // Build filter
     const filter = {
       $or: [
@@ -152,7 +165,7 @@ router.get('/:id', authenticate, async (req, res) => {
         { isPublic: true }
       ]
     }).populate('uploadedBy', 'name email');
-    
+
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
@@ -174,20 +187,29 @@ router.get('/:id/download', authenticate, async (req, res) => {
         { isPublic: true }
       ]
     });
-    
+
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    if (!fs.existsSync(file.path)) {
+    // Resolve the actual path on disk (handle older/stale DB paths)
+    const resolvedPath = resolveFilePath(file.path, file.filename);
+
+    if (!resolvedPath) {
       return res.status(404).json({ message: 'File not found on disk' });
+    }
+
+    // If DB had a stale/relative path, update it for future requests
+    if (resolvedPath !== file.path) {
+      file.path = resolvedPath;
+      await file.save();
     }
 
     // Increment download count
     file.downloadCount += 1;
     await file.save();
 
-    res.download(file.path, file.originalName);
+    res.download(resolvedPath, file.originalName);
   } catch (error) {
     console.error('Error downloading file:', error);
     res.status(500).json({ message: 'Error downloading file' });
@@ -195,22 +217,27 @@ router.get('/:id/download', authenticate, async (req, res) => {
 });
 
 // Update file metadata
-router.put('/:id', 
-  authenticate, 
-  validate(schemas.fileUpdate), 
+router.put('/:id',
+  authenticate,
+  validate(schemas.fileUpdate),
   async (req, res) => {
     try {
-      const file = await File.findOne({
-        _id: req.params.id,
-        uploadedBy: req.user._id
-      });
+      // Build filter based on user role
+      const filter = { _id: req.params.id };
+
+      // Non-admin users can only update their own files
+      if (req.user.role !== 'admin') {
+        filter.uploadedBy = req.user._id;
+      }
+
+      const file = await File.findOne(filter);
 
       if (!file) {
         return res.status(404).json({ message: 'File not found or access denied' });
       }
 
       const { description, tags, isPublic } = req.body;
-      
+
       if (description !== undefined) file.description = description;
       if (tags !== undefined) file.tags = tags;
       if (isPublic !== undefined) file.isPublic = isPublic;
@@ -241,9 +268,16 @@ router.delete('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'File not found or access denied' });
     }
 
-    // Delete file from disk
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
+    // Delete file from disk (try to resolve possible locations first)
+    const resolvedPath = resolveFilePath(file.path, file.filename);
+    if (resolvedPath && fs.existsSync(resolvedPath)) {
+      try {
+        fs.unlinkSync(resolvedPath);
+      } catch (err) {
+        console.error('Failed to delete file from disk:', err);
+      }
+    } else {
+      console.warn('File not found on disk during delete:', file.path);
     }
 
     // Delete file record
