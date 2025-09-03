@@ -2,8 +2,16 @@
 
 # Start script for RoleVault - Single Server Implementation with PM2
 # Backend serves frontend on same port (5000)
+# Usage: ./start-app.sh [--seed]
 
 set -e
+
+# Check for seed flag
+SEED_DATA=false
+if [[ "$1" == "--seed" ]]; then
+    SEED_DATA=true
+    echo "🌱 Seed flag detected - will seed database after startup"
+fi
 
 echo "🚀 Starting RoleVault with PM2..."
 
@@ -37,6 +45,15 @@ cd ..
 
 # Save PM2 process list
 pm2 save
+
+# Seed database if flag was provided
+if [[ "$SEED_DATA" == "true" ]]; then
+    echo "🌱 Seeding database..."
+    cd backend
+    npm run seed
+    cd ..
+    echo "✅ Database seeded successfully!"
+fi
 
 echo "✅ RoleVault started successfully!"
 echo "🌐 App: http://localhost:5000"
