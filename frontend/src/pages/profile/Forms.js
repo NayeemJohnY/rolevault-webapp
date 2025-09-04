@@ -115,17 +115,17 @@ const ProfileInformation = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-8">
+    <div className="page-profile-forms max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="page-profile-forms__form space-y-8">
         {/* Personal Information */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+        <div className="page-profile-forms__card card">
+          <h3 className="page-profile-forms__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
             Personal Information
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="firstName" className="form-label">
+              <label htmlFor="firstName" className="page-profile-forms__label form-label">
                 First Name *
               </label>
               <input
@@ -133,7 +133,7 @@ const ProfileInformation = () => {
                 id="firstName"
                 name="firstName"
                 required
-                className="form-input"
+                className="page-profile-forms__input form-input"
                 value={formData.firstName}
                 onChange={handleInputChange}
                 data-testid="first-name-input"
@@ -141,7 +141,7 @@ const ProfileInformation = () => {
             </div>
 
             <div>
-              <label htmlFor="lastName" className="form-label">
+              <label htmlFor="lastName" className="page-profile-forms__label form-label">
                 Last Name *
               </label>
               <input
@@ -149,7 +149,7 @@ const ProfileInformation = () => {
                 id="lastName"
                 name="lastName"
                 required
-                className="form-input"
+                className="page-profile-forms__input form-input"
                 value={formData.lastName}
                 onChange={handleInputChange}
                 data-testid="last-name-input"
@@ -157,7 +157,7 @@ const ProfileInformation = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="form-label">
+              <label htmlFor="email" className="page-profile-forms__label form-label">
                 Email Address *
               </label>
               <input
@@ -165,7 +165,7 @@ const ProfileInformation = () => {
                 id="email"
                 name="email"
                 required
-                className="form-input"
+                className="page-profile-forms__input form-input"
                 value={formData.email}
                 onChange={handleInputChange}
                 data-testid="email-input"
@@ -173,14 +173,14 @@ const ProfileInformation = () => {
             </div>
 
             <div>
-              <label htmlFor="phone" className="form-label">
+              <label htmlFor="phone" className="page-profile-forms__label form-label">
                 Phone Number
               </label>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
-                className="form-input"
+                className="page-profile-forms__input form-input"
                 value={formData.phone}
                 onChange={handleInputChange}
                 data-testid="phone-input"
@@ -188,14 +188,14 @@ const ProfileInformation = () => {
             </div>
 
             <div>
-              <label htmlFor="birthDate" className="form-label">
+              <label htmlFor="birthDate" className="page-profile-forms__label form-label">
                 Date of Birth
               </label>
               <input
                 type="date"
                 id="birthDate"
                 name="birthDate"
-                className="form-input"
+                className="page-profile-forms__input form-input"
                 value={formData.birthDate}
                 onChange={handleInputChange}
                 data-testid="birth-date-input"
@@ -203,13 +203,13 @@ const ProfileInformation = () => {
             </div>
 
             <div>
-              <label htmlFor="country" className="form-label">
+              <label htmlFor="country" className="page-profile-forms__label form-label">
                 Country
               </label>
               <select
                 id="country"
                 name="country"
-                className="form-input"
+                className="page-profile-forms__select form-input"
                 value={formData.country}
                 onChange={handleInputChange}
                 data-testid="country-select"
@@ -226,24 +226,24 @@ const ProfileInformation = () => {
         </div>
 
         {/* Professional Information */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+        <div className="page-profile-forms__card card">
+          <h3 className="page-profile-forms__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
             Professional Information
           </h3>
 
           {/* Experience Level - Radio buttons */}
           <div className="mb-6">
-            <label className="form-label">Experience Level *</label>
+            <label className="page-profile-forms__label form-label">Experience Level *</label>
             <div className="space-y-2">
               {['Entry Level', 'Mid Level', 'Senior Level', 'Executive'].map(level => (
-                <label key={level} className="flex items-center">
+                <label key={level} className="page-profile-forms__radio-row flex items-center">
                   <input
                     type="radio"
                     name="experience"
                     value={level}
                     checked={formData.experience === level}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                    className="page-profile-forms__radio w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
                     data-testid={`experience-${level.toLowerCase().replace(/\s+/g, '-')}`}
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -263,7 +263,7 @@ const ProfileInformation = () => {
               id="skills"
               name="skills"
               multiple
-              className="form-input"
+              className="page-profile-forms__select form-input"
               value={formData.skills}
               onChange={handleMultiSelectChange}
               data-testid="skills-select"
@@ -281,14 +281,14 @@ const ProfileInformation = () => {
 
           {/* Portfolio URL */}
           <div className="mb-6">
-            <label htmlFor="portfolio" className="form-label">
+            <label htmlFor="portfolio" className="page-profile-forms__label form-label">
               Portfolio URL
             </label>
             <input
               type="url"
               id="portfolio"
               name="portfolio"
-              className="form-input"
+              className="page-profile-forms__input form-input"
               placeholder="https://your-portfolio.com"
               value={formData.portfolio}
               onChange={handleInputChange}
@@ -298,14 +298,14 @@ const ProfileInformation = () => {
 
           {/* Bio - Textarea */}
           <div>
-            <label htmlFor="bio" className="form-label">
+            <label htmlFor="bio" className="page-profile-forms__label form-label">
               Professional Bio
             </label>
             <textarea
               id="bio"
               name="bio"
               rows={4}
-              className="form-input"
+              className="page-profile-forms__textarea form-input"
               placeholder="Tell us about your professional background..."
               value={formData.bio}
               onChange={handleInputChange}
@@ -315,14 +315,14 @@ const ProfileInformation = () => {
         </div>
 
         {/* Preferences */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+        <div className="page-profile-forms__card card">
+          <h3 className="page-profile-forms__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
             Preferences & Interests
           </h3>
 
           {/* Areas of Interest - Checkboxes */}
           <div className="mb-6">
-            <label className="form-label">Areas of Interest</label>
+            <label className="page-profile-forms__label form-label">Areas of Interest</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {interestOptions.map(interest => (
                 <label key={interest} className="flex items-center">
@@ -345,13 +345,13 @@ const ProfileInformation = () => {
 
           {/* Priority Level */}
           <div className="mb-6">
-            <label htmlFor="priority" className="form-label">
+            <label htmlFor="priority" className="page-profile-forms__label form-label">
               Priority Level
             </label>
             <select
               id="priority"
               name="priority"
-              className="form-input"
+              className="page-profile-forms__select form-input"
               value={formData.priority}
               onChange={handleInputChange}
               data-testid="priority-select"
@@ -404,7 +404,7 @@ const ProfileInformation = () => {
           <button
             type="button"
             onClick={resetForm}
-            className="btn-secondary"
+            className="page-profile-forms__reset-btn btn-secondary"
             data-testid="reset-form-btn"
           >
             Reset Form
@@ -413,7 +413,7 @@ const ProfileInformation = () => {
           <button
             type="submit"
             disabled={submitLoading}
-            className="btn-primary"
+            className="page-profile-forms__submit-btn btn-primary"
             data-testid="submit-form-btn"
           >
             {submitLoading ? 'Submitting...' : 'Submit Form'}

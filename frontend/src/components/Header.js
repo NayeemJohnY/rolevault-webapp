@@ -9,7 +9,7 @@ import {
   MoonIcon
 } from '@heroicons/react/24/outline';
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, sidebarCollapsed }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -45,10 +45,10 @@ const Header = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16">
-      <div className="flex items-center justify-between h-full px-6 lg:pl-64">
+    <header className="app-header bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16">
+      <div className={`app-header__container flex items-center justify-between h-full px-6 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Left side */}
-        <div className="flex items-center space-x-4">
+        <div className="app-header__left flex items-center space-x-4">
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -57,23 +57,23 @@ const Header = ({ onMenuClick }) => {
             <Bars3Icon className="w-6 h-6" />
           </button>
 
-          {/* MyVault header logo/title */}
-          <div className="hidden lg:block">
-            <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-300 tracking-tight" data-testid="page-header-logo">
-              MyVault
+          {/* My Vault header logo/title */}
+          <div className="app-header__logo hidden lg:block">
+            <h1 className="app-header__title text-2xl font-bold text-primary-700 dark:text-primary-300 tracking-tight" data-testid="page-header-logo">
+              My Vault
             </h1>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center space-x-4">
+        <div className="app-header__right flex items-center space-x-4">
           {/* Theme toggle */}
           <button
             onClick={() => {
               console.log('[Header] Theme toggle clicked. Previous theme:', theme);
               toggleTheme();
             }}
-            className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-200"
+            className="header__theme-toggle p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-200"
             data-testid="theme-toggle"
           >
             {theme === 'light' ? (
@@ -84,10 +84,10 @@ const Header = ({ onMenuClick }) => {
           </button>
 
           {/* Notifications */}
-          <div className="relative">
+          <div className="header__notifications relative">
             <button
               onClick={handleNotificationToggle}
-              className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-200 relative"
+              className="header__notification-button p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-200 relative"
               data-testid="notifications-button"
             >
               <BellIcon className="w-5 h-5" />
@@ -98,18 +98,18 @@ const Header = ({ onMenuClick }) => {
 
             {/* Notifications dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="header__notification-dropdown absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div className="header__notification-header p-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Notifications
                   </h3>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
+                <div className="header__notification-list max-h-64 overflow-y-auto">
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 ${notification.unread ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+                        className={`header__notification-item p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 ${notification.unread ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
                           }`}
                         data-testid={`notification-${notification.id}`}
                       >
@@ -122,7 +122,7 @@ const Header = ({ onMenuClick }) => {
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                    <div className="header__notification-empty p-4 text-center text-gray-500 dark:text-gray-400">
                       No notifications
                     </div>
                   )}
@@ -132,9 +132,9 @@ const Header = ({ onMenuClick }) => {
           </div>
 
           {/* User avatar with dropdown */}
-          <div className="relative group">
+          <div className="header__avatar-wrapper relative group">
             <button
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+              className="header__avatar flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-label="Profile"
               tabIndex={0}
             >
@@ -143,16 +143,16 @@ const Header = ({ onMenuClick }) => {
                 <img
                   src={user.profileImage}
                   alt="Profile"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-primary-500"
+                  className="header__avatar-img w-10 h-10 rounded-full object-cover border-2 border-primary-500"
                 />
               ) : (
-                <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
+                <div className="header__avatar-initial w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
               )}
 
               {/* User Info - Show on desktop */}
-              <div className="hidden lg:block text-left">
+              <div className="header__user-info hidden lg:block text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white" data-testid="header-user-name">
                   {user?.name}
                 </p>
@@ -162,16 +162,17 @@ const Header = ({ onMenuClick }) => {
               </div>
             </button>
             {/* Dropdown menu */}
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+            <div className="header__user-dropdown absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
               <div
-                className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                className="header__user-dropdown-profile px-4 py-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 role="button"
                 tabIndex={0}
                 onClick={() => navigate('/profile')}
                 onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/profile'); }}
               >
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white" data-testid="header-user-name">
+                  My Profile
+                </p>
               </div>
               <button
                 onClick={() => {
@@ -179,7 +180,7 @@ const Header = ({ onMenuClick }) => {
                     logout();
                   }
                 }}
-                className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="header__user-dropdown-logout block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                 data-testid="logout-button"
               >
                 Logout

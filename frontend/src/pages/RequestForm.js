@@ -78,32 +78,32 @@ const RequestForm = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Submit Request</h1>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="page-request-form max-w-2xl mx-auto p-6">
+      <h1 className="page-request-form__page-title text-2xl font-bold text-gray-900 dark:text-white mb-6">Submit Request</h1>
+      <div className="page-request-form__intro mb-8">
+        <h1 className="page-request-form__title text-2xl font-bold text-gray-900 dark:text-white">
           Submit New Request
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="page-request-form__subtitle text-gray-600 dark:text-gray-400">
           Submit a request for review and approval by administrators
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="page-request-form__form space-y-6">
         {/* Request Type */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+        <div className="page-request-form__card card">
+          <h3 className="page-request-form__section-title text-lg font-medium text-gray-900 dark:text-white mb-4">
             Request Type
           </h3>
 
-          <div className="grid grid-cols-1 gap-3">
+          <div className="page-request-form__options grid grid-cols-1 gap-3">
             {requestTypes
               // If current user is a viewer, hide API key requests from the options
               .filter(t => t.value !== 'api_key' || !window.__APP_USER_ROLE__ || window.__APP_USER_ROLE__ !== 'viewer')
               .map((type) => (
                 <label
                   key={type.value}
-                  className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${formData.type === type.value
+                  className={`page-request-form__request-type-option relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${formData.type === type.value
                     ? 'border-primary-600 ring-2 ring-primary-600 bg-primary-50 dark:bg-primary-900/20'
                     : 'border-gray-300 dark:border-gray-600'
                     }`}
@@ -117,7 +117,7 @@ const RequestForm = () => {
                     className="sr-only"
                     data-testid={`request-type-${type.value}`}
                   />
-                  <div className="flex-1">
+                  <div className="page-request-form__option-content flex-1">
                     <div className="flex items-center">
                       <div className="text-sm">
                         <div className="font-medium text-gray-900 dark:text-white">
@@ -147,14 +147,14 @@ const RequestForm = () => {
         </div>
 
         {/* Request Details */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+        <div className="page-request-form__card card">
+          <h3 className="page-request-form__section-title text-lg font-medium text-gray-900 dark:text-white mb-4">
             Request Details
           </h3>
 
-          <div className="space-y-4">
+          <div className="page-request-form__section-content space-y-4">
             <div>
-              <label htmlFor="title" className="form-label">
+              <label htmlFor="title" className="page-request-form__label form-label">
                 Request Title *
               </label>
               <input
@@ -162,7 +162,7 @@ const RequestForm = () => {
                 id="title"
                 name="title"
                 required
-                className="form-input"
+                className="page-request-form__input form-input"
                 placeholder="Brief summary of your request"
                 value={formData.title}
                 onChange={handleChange}
@@ -171,7 +171,7 @@ const RequestForm = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="form-label">
+              <label htmlFor="description" className="page-request-form__label form-label">
                 Description *
               </label>
               <textarea
@@ -179,7 +179,7 @@ const RequestForm = () => {
                 name="description"
                 required
                 rows={5}
-                className="form-input"
+                className="page-request-form__textarea form-input"
                 placeholder="Provide detailed information about your request, including justification and expected outcomes"
                 value={formData.description}
                 onChange={handleChange}
@@ -191,13 +191,13 @@ const RequestForm = () => {
             </div>
 
             <div>
-              <label htmlFor="priority" className="form-label">
+              <label htmlFor="priority" className="page-request-form__label form-label">
                 Priority Level
               </label>
               <select
                 id="priority"
                 name="priority"
-                className="form-input"
+                className="page-request-form__select form-input"
                 value={formData.priority}
                 onChange={handleChange}
                 data-testid="request-priority-select"
@@ -214,22 +214,22 @@ const RequestForm = () => {
 
         {/* Type-specific fields */}
         {formData.type === 'api_key' && (
-          <div className="card">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="page-request-form__card card">
+            <h3 className="page-request-form__section-title text-lg font-medium text-gray-900 dark:text-white mb-4">
               API Key Details
             </h3>
 
-            <div className="space-y-4">
+            <div className="page-request-form__section-content space-y-4">
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Requested Permissions
                 </label>
-                <div className="space-y-2">
+                <div className="page-request-form__permissions space-y-2">
                   {['read', 'write', 'delete'].map(permission => (
-                    <label key={permission} className="flex items-center">
+                    <label key={permission} className="page-request-form__permission-row flex items-center">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                        className="page-request-form__permission-checkbox w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         checked={formData.metadata.permissions?.includes(permission) || false}
                         onChange={(e) => {
                           const permissions = formData.metadata.permissions || [];
@@ -250,12 +250,12 @@ const RequestForm = () => {
               </div>
 
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Purpose/Use Case
                 </label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="page-request-form__input form-input"
                   placeholder="e.g., Integration with CRM system"
                   value={formData.metadata.purpose || ''}
                   onChange={(e) => handleMetadataChange('purpose', e.target.value)}
@@ -267,18 +267,18 @@ const RequestForm = () => {
         )}
 
         {formData.type === 'role_upgrade' && (
-          <div className="card">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="page-request-form__card card">
+            <h3 className="page-request-form__section-title text-lg font-medium text-gray-900 dark:text-white mb-4">
               Role Upgrade Details
             </h3>
 
-            <div className="space-y-4">
+            <div className="page-request-form__section-content space-y-4">
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Requested Role
                 </label>
                 <select
-                  className="form-input"
+                  className="page-request-form__select form-input"
                   value={formData.metadata.requestedRole || ''}
                   onChange={(e) => handleMetadataChange('requestedRole', e.target.value)}
                   data-testid="requested-role-select"
@@ -290,12 +290,12 @@ const RequestForm = () => {
               </div>
 
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Justification
                 </label>
                 <textarea
                   rows={3}
-                  className="form-input"
+                  className="page-request-form__textarea form-input"
                   placeholder="Explain why you need this role upgrade"
                   value={formData.metadata.justification || ''}
                   onChange={(e) => handleMetadataChange('justification', e.target.value)}
@@ -307,19 +307,19 @@ const RequestForm = () => {
         )}
 
         {formData.type === 'feature_access' && (
-          <div className="card">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="page-request-form__card card">
+            <h3 className="page-request-form__section-title text-lg font-medium text-gray-900 dark:text-white mb-4">
               Feature Access Details
             </h3>
 
-            <div className="space-y-4">
+            <div className="page-request-form__section-content space-y-4">
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Feature Name
                 </label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="page-request-form__input form-input"
                   placeholder="e.g., Advanced Analytics Dashboard"
                   value={formData.metadata.featureName || ''}
                   onChange={(e) => handleMetadataChange('featureName', e.target.value)}
@@ -328,12 +328,12 @@ const RequestForm = () => {
               </div>
 
               <div>
-                <label className="form-label">
+                <label className="page-request-form__label form-label">
                   Business Need
                 </label>
                 <textarea
                   rows={3}
-                  className="form-input"
+                  className="page-request-form__textarea form-input"
                   placeholder="Describe the business need for this feature"
                   value={formData.metadata.businessNeed || ''}
                   onChange={(e) => handleMetadataChange('businessNeed', e.target.value)}
@@ -345,11 +345,11 @@ const RequestForm = () => {
         )}
 
         {/* Submit Actions */}
-        <div className="flex justify-end space-x-4">
+        <div className="page-request-form__actions flex justify-end space-x-4">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="btn-secondary"
+            className="page-request-form__cancel-btn btn-secondary"
             data-testid="cancel-request-btn"
           >
             Cancel
@@ -358,7 +358,7 @@ const RequestForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary flex items-center space-x-2"
+            className="page-request-form__submit-btn btn-primary flex items-center space-x-2"
             data-testid="submit-request-btn"
           >
             {loading ? (

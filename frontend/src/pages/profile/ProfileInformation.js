@@ -182,11 +182,11 @@ const ProfileInformation = () => {
     ];
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Profile Information</h1>
+        <div className="page-profile-information max-w-4xl mx-auto p-6">
+            <h1 className="page-profile-information__title text-2xl font-bold text-gray-900 dark:text-white mb-6">Profile Information</h1>
             {/* Avatar/Profile Photo Upload */}
-            <div className="card mb-8 flex flex-col items-center justify-center">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Profile Photo</h3>
+            <div className="page-profile-information__avatar card mb-8 flex flex-col items-center justify-center">
+                <h3 className="page-profile-information__avatar-title text-lg font-medium text-gray-900 dark:text-white mb-4">Profile Photo</h3>
                 <div className="mb-4">
                     <input
                         type="file"
@@ -198,7 +198,7 @@ const ProfileInformation = () => {
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
-                            className="btn-primary"
+                            className="page-profile-information__upload-btn btn-primary"
                             onClick={() => avatarInputRef.current.click()}
                             data-testid="upload-photo-btn"
                         >
@@ -208,7 +208,7 @@ const ProfileInformation = () => {
                         {avatarPreview && (
                             <button
                                 type="button"
-                                className="btn-ghost text-sm text-red-600 dark:text-red-400"
+                                className="page-profile-information__remove-btn btn-ghost text-sm text-red-600 dark:text-red-400"
                                 onClick={async () => {
                                     if (!window.confirm('Remove profile photo?')) return;
                                     try {
@@ -236,19 +236,19 @@ const ProfileInformation = () => {
                     <img
                         src={avatarPreview}
                         alt="Avatar Preview"
-                        className="rounded-full w-32 h-32 object-cover border-2 border-primary-500"
+                        className="page-profile-information__avatar-img rounded-full w-32 h-32 object-cover border-2 border-primary-500"
                     />
                 )}
             </div>
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="page-profile-information__form space-y-8">
                 {/* Personal Information */}
-                <div className="card">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                <div className="page-profile-information__card card">
+                    <h3 className="page-profile-information__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
                         Personal Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="firstName" className="form-label">
+                            <label htmlFor="firstName" className="page-profile-information__label form-label">
                                 First Name *
                             </label>
                             <input
@@ -256,7 +256,7 @@ const ProfileInformation = () => {
                                 id="firstName"
                                 name="firstName"
                                 required
-                                className="form-input"
+                                className="page-profile-information__input form-input"
                                 value={formData.firstName}
                                 onChange={handleInputChange}
                                 data-testid="first-name-input"
@@ -344,8 +344,8 @@ const ProfileInformation = () => {
                     </div>
                 </div>
                 {/* Professional Information */}
-                <div className="card">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                <div className="page-profile-information__card card">
+                    <h3 className="page-profile-information__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
                         Professional Information
                     </h3>
                     {/* Experience Level - Radio buttons */}
@@ -372,14 +372,14 @@ const ProfileInformation = () => {
                     </div>
                     {/* Skills - Multi-select */}
                     <div className="mb-6">
-                        <label htmlFor="skills" className="form-label">
+                        <label htmlFor="skills" className="page-profile-information__label form-label">
                             Technical Skills (Hold Ctrl/Cmd to select multiple)
                         </label>
                         <select
                             id="skills"
                             name="skills"
                             multiple
-                            className="form-input"
+                            className="page-profile-information__select form-input"
                             value={formData.skills}
                             onChange={handleMultiSelectChange}
                             data-testid="skills-select"
@@ -428,8 +428,8 @@ const ProfileInformation = () => {
                     </div>
                 </div>
                 {/* Preferences */}
-                <div className="card">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                <div className="page-profile-information__card card">
+                    <h3 className="page-profile-information__section-title text-lg font-medium text-gray-900 dark:text-white mb-6">
                         Preferences & Interests
                     </h3>
                     {/* Areas of Interest - Checkboxes */}
@@ -512,7 +512,7 @@ const ProfileInformation = () => {
                     <button
                         type="button"
                         onClick={resetForm}
-                        className="btn-secondary"
+                        className="page-profile-information__reset-btn btn-secondary"
                         data-testid="reset-form-btn"
                     >
                         Reset Form
@@ -520,7 +520,7 @@ const ProfileInformation = () => {
                     <button
                         type="submit"
                         disabled={submitLoading}
-                        className="btn-primary"
+                        className="page-profile-information__submit-btn btn-primary"
                         data-testid="submit-form-btn"
                     >
                         {submitLoading ? 'Submitting...' : 'Submit Form'}

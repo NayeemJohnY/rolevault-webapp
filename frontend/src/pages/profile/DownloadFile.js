@@ -122,8 +122,8 @@ const DownloadFile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Download Files</h1>
+    <div className="page-download-files max-w-6xl mx-auto p-6 space-y-6">
+      <h1 className="page-download-files__title text-2xl font-bold text-gray-900 dark:text-white mb-6">Download Files</h1>
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
@@ -132,7 +132,7 @@ const DownloadFile = () => {
             <input
               type="text"
               placeholder="Search files..."
-              className="form-input pl-10"
+              className="page-download-files__search-input form-input pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               data-testid="file-search-input"
@@ -142,7 +142,7 @@ const DownloadFile = () => {
 
         <div className="flex gap-2">
           <select
-            className="form-input"
+            className="page-download-files__type-select form-input min-w-[140px] max-w-[180px] truncate"
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
             data-testid="file-type-filter"
@@ -156,36 +156,35 @@ const DownloadFile = () => {
 
           <button
             onClick={() => setShowPublicOnly(!showPublicOnly)}
-            className={`btn-secondary flex items-center space-x-2 ${showPublicOnly ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : ''
-              }`}
+            className={`page-download-files__public-btn btn-secondary flex items-center space-x-2 min-w-[120px] max-w-[160px] whitespace-nowrap ${showPublicOnly ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : ''}`}
             data-testid="public-filter-btn"
           >
             <FunnelIcon className="w-4 h-4" />
-            <span>Public Only</span>
+            <span className="whitespace-nowrap">Public Only</span>
           </button>
         </div>
       </div>
 
       {/* Files table */}
-      <div className="card p-0">
+      <div className="page-download-files__card card p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="table-header">File Name</th>
-                <th className="table-header">Size</th>
-                <th className="table-header">Type</th>
-                <th className="table-header">Uploaded</th>
-                <th className="table-header">Downloads</th>
-                <th className="table-header">Status</th>
-                <th className="table-header">Actions</th>
+                <th className="page-download-files__th table-header">File Name</th>
+                <th className="page-download-files__th table-header">Size</th>
+                <th className="page-download-files__th table-header">Type</th>
+                <th className="page-download-files__th table-header">Uploaded</th>
+                <th className="page-download-files__th table-header">Downloads</th>
+                <th className="page-download-files__th table-header">Status</th>
+                <th className="page-download-files__th table-header">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {files.length > 0 ? (
                 files.map((file) => (
                   <tr key={file._id} data-testid={`file-row-${file._id}`}>
-                    <td className="table-cell">
+                    <td className="page-download-files__td table-cell">
                       <div className="flex items-center space-x-3">
                         <DocumentIcon className="w-5 h-5 text-gray-400" />
                         <div>
@@ -200,15 +199,15 @@ const DownloadFile = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="table-cell">
+                    <td className="page-download-files__td table-cell">
                       {formatFileSize(file.size)}
                     </td>
-                    <td className="table-cell">
-                      <span className="badge badge-info">
+                    <td className="page-download-files__td table-cell">
+                      <span className="page-download-files__badge badge badge-info">
                         {file.mimetype.split('/')[1].toUpperCase()}
                       </span>
                     </td>
-                    <td className="table-cell">
+                    <td className="page-download-files__td table-cell">
                       <div>
                         <p className="text-sm text-gray-900 dark:text-white">
                           {formatDate(file.createdAt)}
@@ -218,15 +217,15 @@ const DownloadFile = () => {
                         </p>
                       </div>
                     </td>
-                    <td className="table-cell">
+                    <td className="page-download-files__td table-cell">
                       {file.downloadCount}
                     </td>
-                    <td className="table-cell">
-                      <span className={`badge ${file.isPublic ? 'badge-success' : 'badge-warning'}`}>
+                    <td className="page-download-files__td table-cell">
+                      <span className={`page-download-files__badge--status badge ${file.isPublic ? 'badge-success' : 'badge-warning'}`}>
                         {file.isPublic ? 'Public' : 'Private'}
                       </span>
                     </td>
-                    <td className="table-cell">
+                    <td className="page-download-files__td table-cell">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => downloadFile(file._id, file.originalName)}
@@ -264,7 +263,7 @@ const DownloadFile = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="table-cell text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan="7" className="page-download-files__no-files table-cell text-center text-gray-500 dark:text-gray-400">
                     {loading ? 'Loading files...' : 'No files found'}
                   </td>
                 </tr>
@@ -277,15 +276,15 @@ const DownloadFile = () => {
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+          <p className="page-download-files__pagination-text text-sm text-gray-700 dark:text-gray-300">
             Showing page {pagination.current} of {pagination.pages} ({pagination.total} files total)
           </p>
 
-          <div className="flex space-x-2">
+          <div className="page-download-files__pagination-controls flex space-x-2">
             <button
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
-              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="page-download-files__btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="prev-page-btn"
             >
               Previous
@@ -293,7 +292,7 @@ const DownloadFile = () => {
             <button
               onClick={() => setPage(page + 1)}
               disabled={page >= pagination.pages}
-              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="page-download-files__btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="next-page-btn"
             >
               Next

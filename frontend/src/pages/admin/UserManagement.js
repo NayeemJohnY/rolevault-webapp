@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DataTableSearchFilter, DataTablePagination, useTableData } from '../../components/TableUtilities';
 import Modal from 'react-modal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -9,6 +10,31 @@ const UserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
   const [creating, setCreating] = useState(false);
+
+  // Use table data hook for pagination, search, and filtering
+  const {
+    paginatedData: paginatedUsers,
+    searchQuery,
+    setSearchQuery,
+    filters,
+    updateFilter,
+    pageInfo,
+    setCurrentPage,
+    updatePageSize
+  } = useTableData(users, 10);
+
+  // Filter options for role filter
+  const filterOptions = [
+    {
+      key: 'role',
+      label: 'All Roles',
+      options: [
+        { value: 'admin', label: 'Admin' },
+        { value: 'contributor', label: 'Contributor' },
+        { value: 'viewer', label: 'Viewer' }
+      ]
+    }
+  ];
   const openModal = () => {
     setForm({ name: '', email: '', password: '', role: 'viewer' });
     setIsModalOpen(true);
@@ -69,29 +95,40 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="p-6" data-testid="user-management">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="page-user-management user-management-page p-6" data-testid="user-management">
+      <h1 className="page-user-management__title page-title text-2xl font-bold text-gray-900 dark:text-white mb-6">
         User Management
       </h1>
+
       <button
         onClick={openModal}
-        className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        className="page-user-management__add-btn add-user-button mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         data-testid="add-user-btn"
       >
         Add New User
       </button>
+
+      {/* Search and Filter Controls */}
+      <DataTableSearchFilter
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filterOptions}
+        selectedFilters={filters}
+        onFilterChange={updateFilter}
+        placeholder="Search users by name, email, or role..."
+      />
 
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
         contentLabel="Add User Modal"
         ariaHideApp={false}
-        className="fixed inset-0 flex items-center justify-center z-50"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className="page-user-management__modal fixed inset-0 flex items-center justify-center z-50"
+        overlayClassName="page-user-management__modal-overlay fixed inset-0 bg-black bg-opacity-50 z-40"
       >
         <form
           onSubmit={handleCreateUser}
-          className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
+          className="page-user-management__form bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
         >
           <h2 className="text-xl font-bold mb-4">Add New User</h2>
           <div className="mb-4">
@@ -159,45 +196,45 @@ const UserManagement = () => {
         </form>
       </Modal>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+      <div className="page-user-management__table users-table-container bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <table className="page-user-management__table-table users-table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="page-user-management__table-header table-header bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="header-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="header-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="header-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Role
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="header-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {users.map((userItem) => (
-              <tr key={userItem._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+          <tbody className="page-user-management__table-body table-body bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginatedUsers.map((userItem) => (
+              <tr key={userItem._id} className="page-user-management__row table-row">
+                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                   {userItem.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                   {userItem.email}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
-                      userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
-                        'bg-blue-100 text-blue-800'
+                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap">
+                  <span className={`page-user-management__role-badge role-badge inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
+                    userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
+                      'bg-blue-100 text-blue-800'
                     }`}>
                     {userItem.role}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="page-user-management__cell actions-cell px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => deleteUser(userItem._id)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                    className="page-user-management__delete-btn delete-user-button text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                     data-testid={`delete-user-${userItem._id}`}
                   >
                     Delete
@@ -207,6 +244,13 @@ const UserManagement = () => {
             ))}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <DataTablePagination
+          pageInfo={pageInfo}
+          onPageUpdate={setCurrentPage}
+          onSizeUpdate={updatePageSize}
+        />
       </div>
     </div>
   );

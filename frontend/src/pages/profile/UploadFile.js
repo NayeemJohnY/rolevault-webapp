@@ -105,13 +105,13 @@ const UploadFile = () => {
 
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Upload File</h1>
+    <div className="page-upload-file max-w-3xl mx-auto p-6">
+      <h1 className="page-upload-file__title text-2xl font-bold text-gray-900 dark:text-white mb-6">Upload File</h1>
       <div className="space-y-6">
         {/* Drag and drop area */}
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 ${isDragActive
+          className={`page-upload-file__dropzone border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 ${isDragActive
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
             : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500'
             }`}
@@ -137,7 +137,7 @@ const UploadFile = () => {
 
         {/* File list */}
         {files.length > 0 && (
-          <div className="space-y-4">
+          <div className="page-upload-file__list space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Files to Upload ({files.length})
@@ -145,7 +145,7 @@ const UploadFile = () => {
               <div className="space-x-2">
                 <button
                   onClick={clearCompleted}
-                  className="btn-secondary"
+                  className="page-upload-file__clear-btn btn-secondary"
                   disabled={!files.some((f) => f.status === 'completed')}
                   data-testid="clear-completed-btn"
                 >
@@ -154,7 +154,7 @@ const UploadFile = () => {
                 <button
                   onClick={uploadAllFiles}
                   disabled={uploading || !files.some((f) => f.status === 'pending')}
-                  className="btn-primary"
+                  className="page-upload-file__upload-all-btn btn-primary"
                   data-testid="upload-all-btn"
                 >
                   {uploading ? (
@@ -169,7 +169,7 @@ const UploadFile = () => {
               {files.map((fileData) => (
                 <div
                   key={fileData.id}
-                  className="card"
+                  className="page-upload-file__item card"
                   data-testid={`file-item-${fileData.id}`}
                 >
                   <div className="flex items-start space-x-4">
@@ -179,7 +179,7 @@ const UploadFile = () => {
                           {fileData.file.name}
                         </h4>
                         <div className="flex items-center space-x-2">
-                          <StatusBadge status={fileData.status} />
+                          <StatusBadge status={fileData.status} className="page-upload-file__status-badge" />
                           {fileData.status === 'pending' && (
                             <button
                               onClick={() => removeFile(fileData.id)}
@@ -218,12 +218,12 @@ const UploadFile = () => {
 
                       {/* File metadata form */}
                       {fileData.status === 'pending' && (
-                        <div className="space-y-3">
+                        <div className="page-upload-file__meta space-y-3">
                           <div>
                             <label className="form-label">Description</label>
                             <input
                               type="text"
-                              className="form-input"
+                              className="page-upload-file__input form-input"
                               placeholder="Optional description"
                               value={fileData.description}
                               onChange={(e) =>
@@ -236,7 +236,7 @@ const UploadFile = () => {
                             <label className="form-label">Tags</label>
                             <input
                               type="text"
-                              className="form-input"
+                              className="page-upload-file__input form-input"
                               placeholder="Comma-separated tags"
                               value={fileData.tags}
                               onChange={(e) =>
@@ -249,7 +249,7 @@ const UploadFile = () => {
                             <input
                               type="checkbox"
                               id={`public-${fileData.id}`}
-                              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                              className="page-upload-file__public-checkbox w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                               checked={fileData.isPublic}
                               onChange={(e) =>
                                 updateFileData(fileData.id, 'isPublic', e.target.checked)
@@ -258,7 +258,7 @@ const UploadFile = () => {
                             />
                             <label
                               htmlFor={`public-${fileData.id}`}
-                              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                              className="page-upload-file__public-label ml-2 text-sm text-gray-700 dark:text-gray-300"
                             >
                               Make this file public
                             </label>

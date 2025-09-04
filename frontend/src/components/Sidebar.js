@@ -8,18 +8,26 @@ import {
   KeyIcon,
   DocumentArrowUpIcon,
   DocumentArrowDownIcon,
-  DocumentTextIcon,
   ClipboardDocumentListIcon,
   PlusIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ isOpen, onClose, onOpen }) => {
-  // Collapsed state for desktop (start collapsed by default)
-  const [collapsed, setCollapsed] = useState(true);
+const Sidebar = ({ isOpen, onClose, onOpen, collapsed, setCollapsed, onHover }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (onHover) onHover(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (onHover) onHover(false);
+  };
 
   const handleLogout = () => {
     console.log('[Sidebar] Logout clicked. User:', user);
@@ -28,12 +36,6 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
   };
 
   const navItems = [
-    {
-      name: 'My Profile',
-      href: '/profile',
-      icon: DocumentTextIcon,
-      roles: ['admin', 'contributor', 'viewer']
-    },
     {
       name: 'Dashboard',
       href: '/dashboard',
@@ -69,7 +71,7 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
       name: 'My Requests',
       href: '/requests/mine',
       icon: ClipboardDocumentListIcon,
-      roles: ['admin', 'contributor', 'viewer']
+      roles: ['contributor', 'viewer']
     },
     {
       name: 'User Management',
@@ -95,23 +97,23 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
         fixed inset-y-0 left-0 z-40
         bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${collapsed ? 'lg:w-20' : 'lg:w-64'} w-64
+        ${collapsed && !isHovered ? 'lg:w-20' : 'lg:w-64'} w-64
         lg:translate-x-0
       `}
       data-testid="sidebar"
-      onMouseEnter={onOpen}
-      onMouseLeave={onClose}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="flex flex-col h-full">
         {/* Header with controls */}
-        <div className={`h-16 border-b border-gray-200 dark:border-gray-700 ${collapsed ? 'px-2' : 'px-6'}`}>
+        <div className={`h-16 border-b border-gray-200 dark:border-gray-700 ${collapsed && !isHovered ? 'px-2' : 'px-6'}`}>
           <div className="flex items-center justify-center h-full">
             {/* Collapse/Expand button for desktop (Hamburger icon) */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
               className="hidden lg:flex p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 items-center justify-center"
               data-testid="toggle-sidebar-btn"
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed && !isHovered ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <Bars3Icon className="w-5 h-5" />
             </button>
@@ -128,7 +130,7 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
             </button>
           </div>
         </div>        {/* Navigation */}
-        <nav className={`flex-1 px-4 py-6 space-y-2 overflow-y-auto ${collapsed ? 'lg:px-2 lg:py-4' : ''}`}>
+        <nav className={`flex-1 px-4 py-6 space-y-2 overflow-y-auto ${collapsed && !isHovered ? 'lg:px-2 lg:py-4' : ''}`}>
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -140,21 +142,21 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
                   `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
                     ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                  } ${collapsed ? 'justify-center' : ''}`
+                  } ${collapsed && !isHovered ? 'justify-center' : ''}`
                 }
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                <Icon className={`w-5 h-5 ${collapsed ? '' : 'mr-3'}`} />
-                {!collapsed && item.name}
+                <Icon className={`w-5 h-5 ${collapsed && !isHovered ? '' : 'mr-3'}`} />
+                {!(collapsed && !isHovered) && item.name}
               </NavLink>
             );
           })}
         </nav>
 
         {/* External Links and Logout */}
-        <div className={`p-4 border-t border-gray-200 dark:border-gray-700 space-y-2 ${collapsed ? 'lg:px-2 lg:py-4' : ''}`}>
+        <div className={`p-4 border-t border-gray-200 dark:border-gray-700 space-y-2 ${collapsed && !isHovered ? 'lg:px-2 lg:py-4' : ''}`}>
           {/* External Links */}
-          <div className={`flex gap-3 mt-2 items-center ${collapsed ? 'flex-col justify-center lg:gap-2' : 'justify-center'}`}>
+          <div className={`flex gap-3 mt-2 items-center ${collapsed && !isHovered ? 'flex-col justify-center lg:gap-2' : 'justify-center'}`}>
             {(user?.role === 'admin' || user?.role === 'contributor') && (
               <NavLink
                 to="/api/health"
@@ -190,11 +192,11 @@ const Sidebar = ({ isOpen, onClose, onOpen }) => {
 
           <button
             onClick={handleLogout}
-            className={`flex items-center text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 ${collapsed ? 'w-10 h-10 px-0 py-0 justify-center mx-auto' : 'w-full px-3 py-2'}`}
+            className={`flex items-center text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 ${collapsed && !isHovered ? 'w-10 h-10 px-0 py-0 justify-center mx-auto' : 'w-full px-3 py-2'}`}
             data-testid="logout-btn"
           >
-            <ArrowRightOnRectangleIcon className={`w-5 h-5 ${collapsed ? '' : 'mr-3'}`} />
-            {!collapsed && 'Logout'}
+            <ArrowRightOnRectangleIcon className={`w-5 h-5 ${collapsed && !isHovered ? '' : 'mr-3'}`} />
+            {!(collapsed && !isHovered) && 'Logout'}
           </button>
         </div>
       </div>
