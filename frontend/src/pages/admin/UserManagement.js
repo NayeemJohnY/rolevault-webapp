@@ -3,6 +3,7 @@ import { DataTableSearchFilter, DataTablePagination, useTableData } from '../../
 import Modal from 'react-modal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -10,6 +11,7 @@ const UserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
   const [creating, setCreating] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Use table data hook for pagination, search, and filtering
   const {
@@ -79,15 +81,21 @@ const UserManagement = () => {
   };
 
   const deleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        await axios.delete(`/api/users/${userId}`);
-        setUsers(users.filter(u => u._id !== userId));
-        toast.success('User deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete user');
+    setConfirmDialog({
+      open: true,
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user?',
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        try {
+          await axios.delete(`/api/users/${userId}`);
+          setUsers(users.filter(u => u._id !== userId));
+          toast.success('User deleted successfully');
+        } catch (error) {
+          toast.error('Failed to delete user');
+        }
       }
-    }
+    });
   };
 
   if (loading) {
@@ -195,6 +203,14 @@ const UserManagement = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
 
       <div className="page-user-management__table users-table-container bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
         <table className="page-user-management__table-table users-table min-w-full divide-y divide-gray-200 dark:divide-gray-700">

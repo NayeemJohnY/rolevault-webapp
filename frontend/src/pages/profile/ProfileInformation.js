@@ -1,7 +1,7 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const ProfileInformation = () => {
     const { updateProfile, user } = useAuth();
@@ -9,6 +9,9 @@ const ProfileInformation = () => {
     // Initialize avatarPreview from user.profileImage if available
     const [avatarPreview, setAvatarPreview] = useState(user?.profileImage || null);
     const avatarInputRef = useRef();
+    // Confirm dialog state
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
+
     // Avatar upload handler
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
@@ -210,20 +213,27 @@ const ProfileInformation = () => {
                                 type="button"
                                 className="page-profile-information__remove-btn btn-ghost text-sm text-red-600 dark:text-red-400"
                                 onClick={async () => {
-                                    if (!window.confirm('Remove profile photo?')) return;
-                                    try {
-                                        const result = await updateProfile({ profileImage: null });
-                                        if (result.success) {
-                                            setAvatarPreview(null);
-                                            // clear file input
-                                            if (avatarInputRef.current) avatarInputRef.current.value = null;
-                                            toast.success('Profile photo removed');
-                                        } else {
-                                            toast.error(result.error || 'Failed to remove profile photo');
+                                    setConfirmDialog({
+                                        open: true,
+                                        title: 'Remove Profile Photo',
+                                        message: 'Remove profile photo?',
+                                        onConfirm: async () => {
+                                            setConfirmDialog({ ...confirmDialog, open: false });
+                                            try {
+                                                const result = await updateProfile({ profileImage: null });
+                                                if (result.success) {
+                                                    setAvatarPreview(null);
+                                                    // clear file input
+                                                    if (avatarInputRef.current) avatarInputRef.current.value = null;
+                                                    toast.success('Profile photo removed');
+                                                } else {
+                                                    toast.error(result.error || 'Failed to remove profile photo');
+                                                }
+                                            } catch (err) {
+                                                toast.error('Failed to remove profile photo');
+                                            }
                                         }
-                                    } catch (err) {
-                                        toast.error('Failed to remove profile photo');
-                                    }
+                                    });
                                 }}
                                 data-testid="remove-photo-btn"
                             >
@@ -536,6 +546,13 @@ const ProfileInformation = () => {
                     {JSON.stringify(formData, null, 2)}
                 </pre>
             </div>
+            <ConfirmDialog
+                isOpen={confirmDialog.open}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+            />
         </div>
     );
 };

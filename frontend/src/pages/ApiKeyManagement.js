@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Modal from 'react-modal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
@@ -14,6 +13,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { DataTableSearchFilter, DataTablePagination, useTableData } from '../components/TableUtilities';
 import { formatDate, copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../contexts/AuthContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const ApiKeyManagement = () => {
   const [apiKeys, setApiKeys] = useState([]);
@@ -21,6 +21,7 @@ const ApiKeyManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [selectedKey, setSelectedKey] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const { canViewAllAPIKeys } = useAuth();
 
@@ -64,7 +65,6 @@ const ApiKeyManagement = () => {
     }
   };
 
-
   const openKeyModal = (apiKey) => {
     setSelectedKey(apiKey);
     setShowKeyModal(true);
@@ -75,32 +75,41 @@ const ApiKeyManagement = () => {
     setSelectedKey(null);
   };
   const deactivateApiKey = async (keyId) => {
-    if (!window.confirm('Are you sure you want to deactivate this API key?')) return;
-    try {
-      await axios.put(`/api/apikeys/${keyId}`, { isActive: false });
-      setApiKeys(apiKeys.map(key => key._id === keyId ? { ...key, isActive: false } : key));
-      toast.success('API key deactivated');
-    } catch (error) {
-      toast.error('Failed to deactivate API key');
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Deactivate API Key',
+      message: 'Are you sure you want to deactivate this API key?',
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        try {
+          await axios.put(`/api/apikeys/${keyId}`, { isActive: false });
+          setApiKeys(apiKeys.map(key => key._id === keyId ? { ...key, isActive: false } : key));
+          toast.success('API key deactivated');
+        } catch (error) {
+          toast.error('Failed to deactivate API key');
+        }
+      }
+    });
   };
 
   const deleteApiKey = async (keyId, keyName) => {
-    if (!window.confirm(`Are you sure you want to delete the API key "${keyName}"?`)) {
-      return;
-    }
-
-    try {
-      await axios.delete(`/api/apikeys/${keyId}`);
-      setApiKeys(apiKeys.filter(key => key._id !== keyId));
-      toast.success('API key deleted successfully');
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Failed to delete API key');
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Delete API Key',
+      message: `Are you sure you want to delete the API key "${keyName}"?`,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        try {
+          await axios.delete(`/api/apikeys/${keyId}`);
+          setApiKeys(apiKeys.filter(key => key._id !== keyId));
+          toast.success('API key deleted successfully');
+        } catch (error) {
+          console.error('Delete error:', error);
+          toast.error('Failed to delete API key');
+        }
+      }
+    });
   };
-
-
 
   if (loading) {
     return (
@@ -244,46 +253,6 @@ const ApiKeyManagement = () => {
                         </button>
                       </div>
                     </td>
-                    {/* View API Key Modal */}
-                    <Modal
-                      isOpen={showKeyModal}
-                      onRequestClose={closeKeyModal}
-                      contentLabel="View API Key"
-                      ariaHideApp={false}
-                      className="page-apikey-management__key-modal fixed inset-0 flex items-center justify-center z-50"
-                      overlayClassName="page-apikey-management__key-modal-overlay fixed inset-0 bg-black bg-opacity-50 z-40"
-                    >
-                      <div className="page-apikey-management__key-modal-content bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">API Key</h2>
-                        <div className="mb-4">
-                          <div className="flex items-center gap-2">
-                            <div className="overflow-x-auto max-w-xs border rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 font-mono text-lg whitespace-nowrap">
-                              {selectedKey?.key}
-                            </div>
-                            <span
-                              onClick={() => {
-                                copyToClipboard(selectedKey?.key);
-                                toast.success('API key copied to clipboard!');
-                              }}
-                              className="page-apikey-management__copy-icon cursor-pointer text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                              title="Copy API key"
-                              data-testid="copy-key-icon"
-                              tabIndex={0}
-                              role="button"
-                              aria-label="Copy API key"
-                            >
-                              <DocumentDuplicateIcon className="w-5 h-5" />
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={closeKeyModal}
-                          className="page-apikey-management__close-btn px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </Modal>
                   </tr>
                 ))
               ) : (
@@ -314,6 +283,48 @@ const ApiKeyManagement = () => {
             setShowCreateModal(false);
           }}
         />
+      )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
+
+      {/* View API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 z-10 w-full max-w-xs">
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">API Key</h3>
+            <div className="mb-4 w-full">
+              <span className="font-mono text-sm px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded border overflow-x-auto whitespace-nowrap max-w-full select-all block">
+                {selectedKey?.key}
+              </span>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  copyToClipboard(selectedKey?.key);
+                  toast.success('API key copied to clipboard!');
+                }}
+                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1"
+                data-testid="copy-key-btn"
+              >
+                <DocumentDuplicateIcon className="w-4 h-4" /> Copy
+              </button>
+              <button
+                onClick={closeKeyModal}
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

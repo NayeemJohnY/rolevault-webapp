@@ -13,6 +13,7 @@ import {
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatFileSize, formatDate } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const DownloadFile = () => {
   const [files, setFiles] = useState([]);
@@ -22,6 +23,7 @@ const DownloadFile = () => {
   const [showPublicOnly, setShowPublicOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const { user, canMakeFilesPublic } = useAuth();
 
@@ -76,18 +78,21 @@ const DownloadFile = () => {
   };
 
   const deleteFile = async (fileId, filename) => {
-    if (!window.confirm(`Are you sure you want to delete "${filename}"?`)) {
-      return;
-    }
-
-    try {
-      await axios.delete(`/api/files/${fileId}`);
-      setFiles(files.filter(f => f._id !== fileId));
-      toast.success('File deleted successfully');
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Failed to delete file');
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Delete File',
+      message: `Are you sure you want to delete "${filename}"?`,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        try {
+          await axios.delete(`/api/files/${fileId}`);
+          setFiles(files.filter(f => f._id !== fileId));
+          toast.success(`${filename} deleted successfully!`);
+        } catch (error) {
+          toast.error('Failed to delete file');
+        }
+      }
+    });
   };
 
   const toggleFileVisibility = async (fileId, currentVisibility) => {
@@ -300,6 +305,15 @@ const DownloadFile = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
     </div>
   );
 };
