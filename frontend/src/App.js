@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import Login from './pages/Login';
+import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import UploadFile from './pages/profile/UploadFile';
 import DownloadFile from './pages/profile/DownloadFile';
@@ -59,8 +59,12 @@ function AppRoutes() {
       {/* Public routes */}
       <Route
         path="/login"
-        element={!user ? <Login /> : <Navigate to="/dashboard" replace />}
+        element={!user ? <Auth /> : <Navigate to="/dashboard" replace />}
       />
+        <Route
+          path="/register"
+          element={!user ? <Auth /> : <Navigate to="/dashboard" replace />}
+        />
 
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -71,33 +75,40 @@ function AppRoutes() {
         <Route path="profile" element={<ProfileInformation />} />
 
         {/* Upload/Download as separate routes */}
-        <Route path="upload" element={<UploadFile />} />
-        <Route path="download" element={<DownloadFile />} />
+        <Route path="upload" element={
+          <ProtectedRoute permissions={['rv.files.upload']}>
+            <UploadFile />
+          </ProtectedRoute>
+        } />
+        <Route path="download" element={
+          <ProtectedRoute permissions={['rv.files.download']}>
+            <DownloadFile />
+          </ProtectedRoute>
+        } />
 
         {/* API Key management */}
         <Route path="apikeys" element={
-          <ProtectedRoute roles={['admin', 'contributor']}>
+          <ProtectedRoute permissions={['rv.apiKeys.view']}>
             <ApiKeyManagement />
           </ProtectedRoute>
         } />
 
         {/* Request management */}
-        {/* Admin: review all requests */}
         <Route path="requests" element={
-          <ProtectedRoute roles={['admin']}>
+          <ProtectedRoute permissions={['rv.requests.viewAll']}>
             <Requests />
           </ProtectedRoute>
         } />
 
         {/* Users: view their own requests */}
         <Route path="requests/mine" element={
-          <ProtectedRoute roles={['contributor', 'viewer', 'admin']}>
+          <ProtectedRoute permissions={['rv.requests.view']}>
             <MyRequests />
           </ProtectedRoute>
         } />
 
         <Route path="requests/new" element={
-          <ProtectedRoute roles={['contributor', 'viewer']}>
+          <ProtectedRoute permissions={['rv.requests.create']}>
             <RequestForm />
           </ProtectedRoute>
         } />
@@ -105,14 +116,14 @@ function AppRoutes() {
         {/* Admin routes */}
         <Route path="manage">
           <Route path="users" element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute permissions={['rv.users.manage']}>
               <UserManagement />
             </ProtectedRoute>
           } />
         </Route>
         {/* API Health (admin + contributor) */}
         <Route path="api/health" element={
-          <ProtectedRoute roles={["admin", "contributor"]}>
+          <ProtectedRoute permissions={['rv.apiKeys.view']}>
             <ApiHealth />
           </ProtectedRoute>
         } />

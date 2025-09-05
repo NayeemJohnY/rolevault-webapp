@@ -52,7 +52,7 @@ const ALL_WIDGETS = [
 ];
 
 const Dashboard = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, canManageUsers, canUploadFiles, canDownloadFiles, canViewAllRequests } = useAuth();
 
   // Widgets currently in dashboard
   const [widgets, setWidgets] = useState([]);
@@ -60,6 +60,7 @@ const Dashboard = () => {
   const [availableWidgets, setAvailableWidgets] = useState(ALL_WIDGETS);
   // Expanded state for floating pane
   const [expanded, setExpanded] = useState(false);
+  const lastFetchedUserId = React.useRef(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -124,6 +125,9 @@ const Dashboard = () => {
 
   // Load dashboard configuration / data from backend
   React.useEffect(() => {
+    if (!user || lastFetchedUserId.current === user._id) return;
+    lastFetchedUserId.current = user._id;
+
     let mounted = true;
     const fetchDashboard = async () => {
       try {
@@ -170,9 +174,7 @@ const Dashboard = () => {
       }
     };
 
-    if (user) {
-      fetchDashboard();
-    }
+    fetchDashboard();
     return () => { mounted = false; };
   }, [user]); const getGreeting = () => {
     const hour = new Date().getHours();
@@ -182,31 +184,26 @@ const Dashboard = () => {
   };
 
   const getQuickActions = () => {
-    // Base actions for all roles
-    const baseActions = [
+    // Base actions for all users
+    const actions = [
       { title: 'View Profile', path: '/profile', icon: '👤' },
-      { title: 'Download Files', path: '/download', icon: '📥' },
     ];
 
-    // Admin: base + Manage Users + Upload
-    if (user?.role === 'admin') {
-      return [
-        ...baseActions,
-        { title: 'Manage Users', path: '/manage/users', icon: '👥' },
-        { title: 'Upload File', path: '/upload', icon: '📤' },
-      ];
+    if (canUploadFiles()) {
+      actions.push(
+        { title: 'Upload File', path: '/upload', icon: '📤' });
     }
 
-    // Contributor: base + Upload
-    if (user?.role === 'contributor') {
-      return [
-        ...baseActions,
-        { title: 'Upload File', path: '/upload', icon: '📤' },
-      ];
+    if (canDownloadFiles()) {
+      actions.push({ title: 'Download Files', path: '/download', icon: '📥' });
     }
 
-    // Viewer and others: base actions only (no Upload)
-    return baseActions;
+    if (canManageUsers()) {
+      actions.push(
+        { title: 'Manage Users', path: '/manage/users', icon: '👥' });
+    }
+
+    return actions;
   };
 
   // Icon mapping for widgets
@@ -231,7 +228,11 @@ const Dashboard = () => {
               {getGreeting()}, {user?.name || 'User'}!
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Welcome to your dashboard. You're logged in as a <span className="font-semibold capitalize">{user?.role}</span>.
+              Welcome to your dashboard. You have{' '}
+              <span className="font-semibold">
+                {canManageUsers() ? 'Administrative' : canUploadFiles() ? 'Contributor' : 'Viewer'}
+              </span>{' '}
+              access.
             </p>
           </div>
 
@@ -239,7 +240,7 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              {getQuickActions().slice(0, 4).map((action, index) => (
+              {getQuickActions().map((action, index) => (
                 <a
                   key={index}
                   href={action.path}
@@ -312,7 +313,7 @@ const Dashboard = () => {
                                     <div className="font-medium">{request.title}</div>
                                     <div className="text-gray-600 dark:text-gray-400 text-xs">
                                       {request.type} • {request.priority}
-                                      {widget.data.isAdmin && request.requestedBy ? ` • ${request.requestedBy.name}` : ''}
+                                      {canViewAllRequests() && request.requestedBy ? ` • ${request.requestedBy.name}` : ''}
                                     </div>
                                   </div>
                                 ))}
@@ -369,8 +370,8 @@ const Dashboard = () => {
             </SortableContext>
           </div>
 
-          {/* Role-specific content */}
-          {user?.role === 'admin' && (
+          {/* Permission-specific content */}
+          {canManageUsers() && (
             <div className="mt-6 bg-red-50 dark:bg-red-900/20 rounded-lg shadow-md p-6">
               <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-4">Admin Panel</h2>
               <p className="text-red-700 dark:text-red-400">
@@ -379,7 +380,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {user?.role === 'contributor' && (
+          {canUploadFiles() && !canManageUsers() && (
             <div className="mt-6 bg-green-50 dark:bg-green-900/20 rounded-lg shadow-md p-6">
               <h2 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-4">Contributor Tools</h2>
               <p className="text-green-700 dark:text-green-400">
@@ -388,7 +389,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {user?.role === 'viewer' && (
+          {!canUploadFiles() && !canManageUsers() && (
             <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-md p-6">
               <h2 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">Viewer Access</h2>
               <p className="text-blue-700 dark:text-blue-400">

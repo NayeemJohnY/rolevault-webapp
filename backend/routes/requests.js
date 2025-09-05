@@ -1,11 +1,12 @@
 const express = require('express');
 const Request = require('../models/Request');
-const { authenticate, adminOnly, adminOrContributor } = require('../middleware/auth');
+const { authenticate, canApproveRejectRequests, canViewAllRequests, canSubmitRequests } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const { createNotification, NotificationTypes } = require('../utils/notificationService');
 
 const router = express.Router();
 
-// Get requests (Admin sees all, others see only their own)
+// Get own requests
 router.get('/', authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, type } = req.query;
@@ -41,8 +42,8 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Get all requests for admin review (Admin only)
-router.get('/admin/review', authenticate, adminOnly, async (req, res) => {
+// Get all requests for review 
+router.get('/review', canViewAllRequests, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, type } = req.query;
 
@@ -71,13 +72,15 @@ router.get('/admin/review', authenticate, adminOnly, async (req, res) => {
     console.error('Error fetching requests for review:', error);
     res.status(500).json({ message: 'Error fetching requests for review' });
   }
-});// Get request by ID
+});
+
+// Get request by ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
 
     // Non-admin users can only see their own requests
-    if (req.user.role !== 'admin') {
+    if (!req.user.permissions.includes('rv.requests.viewAll')) {
       filter.requestedBy = req.user._id;
     }
 
@@ -97,44 +100,44 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Create new request
-// Allow any authenticated user (including viewers) to submit requests.
-router.post('/',
-  authenticate,
-  validate('request'),
-  async (req, res) => {
-    try {
-      // Viewers are allowed to submit regular requests but not API key requests
-      if (req.user.role === 'viewer' && req.body.type === 'api_key') {
-        return res.status(403).json({ message: 'Viewers are not permitted to request API keys.' });
-      }
-      const { type, title, description, priority = 'medium', metadata = {} } = req.body;
-
-      const request = new Request({
-        type,
-        title,
-        description,
-        priority,
-        metadata,
-        requestedBy: req.user._id
-      });
-
-      await request.save();
-      await request.populate('requestedBy', 'name email role');
-
-      res.status(201).json({
-        message: 'Request submitted successfully',
-        request
-      });
-    } catch (error) {
-      console.error('Error creating request:', error);
-      res.status(500).json({ message: 'Error creating request' });
+// Allow authenticated users with submit permission to submit requests.
+router.post('/', canSubmitRequests, validate('request'), async (req, res) => {
+  try {
+    // Viewers are allowed to submit regular requests but not API key requests
+    if (req.body.type === 'api_key' && !req.user.permissions.includes('rv.apiKeys.create')) {
+      return res.status(403).json({ message: 'You do not have permission to request API keys.' });
     }
+    const { type, title, description, priority = 'medium', metadata = {} } = req.body;
+
+    const request = new Request({
+      type,
+      title,
+      description,
+      priority,
+      metadata,
+      requestedBy: req.user._id
+    });
+
+    await request.save();
+    await request.populate('requestedBy', 'name email role');
+
+    // Create notification for request submission
+    await createNotification(req.user._id, NotificationTypes.REQUEST_SUBMITTED(request.type));
+
+    res.status(201).json({
+      message: 'Request submitted successfully',
+      request
+    });
+  } catch (error) {
+    console.error('Error creating request:', error);
+    res.status(500).json({ message: 'Error creating request' });
   }
+}
 );
 
 // Update request (only for pending requests by the requester)
 // Allow the original requester (including viewers) to update their pending requests.
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', canSubmitRequests, async (req, res) => {
   try {
     const request = await Request.findOne({
       _id: req.params.id,
@@ -170,43 +173,54 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
-// Review request (Admin only)
-router.patch('/:id/review',
-  authenticate,
-  adminOnly,
-  validate('request'),
-  async (req, res) => {
-    try {
-      const { status, reviewComment } = req.body;
+// Review request & Approve / Reject
+router.patch('/:id/review', canApproveRejectRequests, async (req, res) => {
+  try {
+    const { status, reviewComment } = req.body;
 
-      const request = await Request.findOne({
-        _id: req.params.id,
-        status: 'pending'
-      });
-
-      if (!request) {
-        return res.status(404).json({
-          message: 'Request not found or already reviewed'
-        });
-      }
-
-      request.status = status;
-      request.reviewedBy = req.user._id;
-      request.reviewedAt = new Date();
-      if (reviewComment) request.reviewComment = reviewComment;
-
-      await request.save();
-      await request.populate(['requestedBy reviewedBy'], 'name email role');
-
-      res.json({
-        message: `Request ${status} successfully`,
-        request
-      });
-    } catch (error) {
-      console.error('Error reviewing request:', error);
-      res.status(500).json({ message: 'Error reviewing request' });
+    // Check if user has permission to approve or reject based on the status
+    if (status === 'approved' && !req.user.permissions.includes('rv.requests.approve')) {
+      return res.status(403).json({ message: 'You do not have permission to approve requests.' });
     }
+    if (status === 'rejected' && !req.user.permissions.includes('rv.requests.reject')) {
+      return res.status(403).json({ message: 'You do not have permission to reject requests.' });
+    }
+
+    const request = await Request.findOne({
+      _id: req.params.id,
+      status: 'pending'
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        message: 'Request not found or already reviewed'
+      });
+    }
+
+    request.status = status;
+    request.reviewedBy = req.user._id;
+    request.reviewedAt = new Date();
+    if (reviewComment) request.reviewComment = reviewComment;
+
+    await request.save();
+    await request.populate(['requestedBy reviewedBy'], 'name email role');
+
+    // Create notification for request review
+    if (status === 'approved') {
+      await createNotification(request.requestedBy._id, NotificationTypes.REQUEST_APPROVED(request.type));
+    } else if (status === 'rejected') {
+      await createNotification(request.requestedBy._id, NotificationTypes.REQUEST_REJECTED(request.type));
+    }
+
+    res.json({
+      message: `Request ${status} successfully`,
+      request
+    });
+  } catch (error) {
+    console.error('Error reviewing request:', error);
+    res.status(500).json({ message: 'Error reviewing request' });
   }
+}
 );
 
 // Delete request (Admin or requester for pending requests)
@@ -215,7 +229,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const filter = { _id: req.params.id };
 
     // Admin can delete any request, users can only delete their own pending requests
-    if (req.user.role !== 'admin') {
+    if (!req.user.permissions.includes('rv.requests.viewAll')) {
       filter.requestedBy = req.user._id;
       filter.status = 'pending';
     }
@@ -235,65 +249,5 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
-// Get pending requests count for admin dashboard
-router.get('/stats/pending', authenticate, adminOnly, async (req, res) => {
-  try {
-    const pendingCount = await Request.countDocuments({ status: 'pending' });
-
-    const recentRequests = await Request.find({ status: 'pending' })
-      .populate('requestedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    res.json({
-      pendingCount,
-      recentRequests
-    });
-  } catch (error) {
-    console.error('Error fetching pending requests:', error);
-    res.status(500).json({ message: 'Error fetching pending requests' });
-  }
-});
-
-// Get request statistics (Admin only)
-router.get('/stats/overview', authenticate, adminOnly, async (req, res) => {
-  try {
-    const stats = await Request.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const typeStats = await Request.aggregate([
-      {
-        $group: {
-          _id: '$type',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const formattedStats = {
-      pending: 0,
-      approved: 0,
-      denied: 0
-    };
-
-    stats.forEach(stat => {
-      formattedStats[stat._id] = stat.count;
-    });
-
-    res.json({
-      statusStats: formattedStats,
-      typeStats
-    });
-  } catch (error) {
-    console.error('Error fetching request stats:', error);
-    res.status(500).json({ message: 'Error fetching request statistics' });
-  }
-});
 
 module.exports = router;

@@ -16,6 +16,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initializedRef = React.useRef(false);
 
   // Configure axios defaults
   useEffect(() => {
@@ -27,13 +28,19 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const initializeAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
           const response = await axios.get('/api/auth/me');
           setUser(response.data.user);
-          try { localStorage.setItem('user_role', response.data.user.role); } catch (e) { }
+          try {
+            localStorage.setItem('user_role', response.data.user.role);
+            localStorage.setItem('user_permissions', JSON.stringify(response.data.user.permissions || []));
+          } catch (e) { }
         } catch (error) {
           console.error('Auth check failed:', error);
           localStorage.removeItem('token');
@@ -52,7 +59,10 @@ export const AuthProvider = ({ children }) => {
       const { user: userData, token } = response.data;
 
       localStorage.setItem('token', token);
-      try { localStorage.setItem('user_role', userData.role); } catch (e) { }
+      try {
+        localStorage.setItem('user_role', userData.role);
+        localStorage.setItem('user_permissions', JSON.stringify(userData.permissions || []));
+      } catch (e) { }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
 
@@ -71,14 +81,37 @@ export const AuthProvider = ({ children }) => {
       const { user: newUser, token } = response.data;
 
       localStorage.setItem('token', token);
-      try { localStorage.setItem('user_role', newUser.role); } catch (e) { }
+      try {
+        localStorage.setItem('user_role', newUser.role);
+        localStorage.setItem('user_permissions', JSON.stringify(newUser.permissions || []));
+      } catch (e) { }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(newUser);
 
       toast.success(`Account created successfully! Welcome, ${newUser.name}!`);
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
+      const data = error.response?.data;
+      const message = data?.message || 'Registration failed';
+
+      // Map validation errors (Joi) to fieldErrors for the UI
+      const fieldErrors = {};
+      if (Array.isArray(data?.errors)) {
+        data.errors.forEach((err) => {
+          if (err.field) fieldErrors[err.field] = err.message;
+        });
+      }
+
+      // Handle common duplicate email message from server
+      if (!Object.keys(fieldErrors).length && /already exists/i.test(message)) {
+        fieldErrors.email = message;
+      }
+
+      if (Object.keys(fieldErrors).length) {
+        toast.error(message);
+        return { success: false, error: message, fieldErrors };
+      }
+
       toast.error(message);
       return { success: false, error: message };
     }
@@ -86,7 +119,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
-    try { localStorage.removeItem('user_role'); } catch (e) { }
+    try {
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_permissions');
+    } catch (e) { }
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     toast.success('Logged out successfully');
@@ -96,7 +132,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.put('/api/auth/me', updates);
       setUser(response.data.user);
-      try { localStorage.setItem('user_role', response.data.user.role); } catch (e) { }
+      try {
+        localStorage.setItem('user_role', response.data.user.role);
+        localStorage.setItem('user_permissions', JSON.stringify(response.data.user.permissions || []));
+      } catch (e) { }
       if (showToast) {
         toast.success('Profile updated successfully');
       }
@@ -108,17 +147,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const hasRole = (roles) => {
+  const hasPermission = (permissions) => {
     if (!user) return false;
-    if (Array.isArray(roles)) {
-      return roles.includes(user.role);
+    if (Array.isArray(permissions)) {
+      return permissions.some(permission => user.permissions?.includes(permission));
     }
-    return user.role === roles;
+    return user.permissions?.includes(permissions);
   };
 
-  const isAdmin = () => hasRole('admin');
-  const isContributor = () => hasRole(['admin', 'contributor']);
-  const isViewer = () => hasRole(['admin', 'contributor', 'viewer']);
+  const canManageUsers = () => hasPermission('rv.users.manage');
+  const canViewAllRequests = () => hasPermission('rv.requests.viewAll');
+  const canApproveRequests = () => hasPermission(['rv.requests.approve', 'rv.requests.reject']);
+  const canSubmitRequests = () => hasPermission('rv.requests.create');
+  const canViewApiKeys = () => hasPermission(['rv.apiKeys.view']);
+  const canViewAllAPIKeys = () => hasPermission(['rv.apiKeys.viewAll']);
+  const canUploadFiles = () => hasPermission('rv.files.upload');
+  const canDownloadFiles = () => hasPermission('rv.files.download');
+  const canMakeFilesPublic = () => hasPermission('rv.files.makePublic');
 
   const value = {
     user,
@@ -127,13 +172,17 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
-    hasRole,
-    isAdmin,
-    isContributor,
-    isViewer
-  };
-
-  return (
+    hasPermission,
+    canManageUsers,
+    canViewAllRequests,
+    canApproveRequests,
+    canSubmitRequests,
+    canViewApiKeys,
+    canViewAllAPIKeys,
+    canUploadFiles,
+    canDownloadFiles,
+    canMakeFilesPublic
+  }; return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>

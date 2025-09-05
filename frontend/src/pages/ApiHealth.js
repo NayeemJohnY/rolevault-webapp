@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../hooks/useApi';
 
 export default function ApiHealth() {
-    const { user } = useAuth();
+    const { user, canManageUsers, canUploadFiles } = useAuth();
     const { get } = useApi();
     const [endpoints, setEndpoints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function ApiHealth() {
         async function fetchHealth() {
             setLoading(true);
             try {
-                const role = user?.role || 'viewer';
+                const role = canManageUsers() ? 'admin' : canUploadFiles() ? 'contributor' : 'viewer';
                 const res = await get('/api/health', { params: { role } });
                 if (!mounted) return;
                 if (res?.data?.success) {
@@ -32,7 +32,7 @@ export default function ApiHealth() {
         }
         fetchHealth();
         return () => { mounted = false; };
-    }, [user, get]);
+    }, [user, get, canManageUsers, canUploadFiles]);
 
     if (loading) return <div className="p-6">Loading API health...</div>;
     if (error) return <div className="p-6 text-red-600">{error}</div>;

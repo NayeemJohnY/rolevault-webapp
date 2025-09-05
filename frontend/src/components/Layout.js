@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { log } from '../utils/helpers';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -10,11 +11,11 @@ const Layout = () => {
 
   // Log sidebar state changes
   React.useEffect(() => {
-    console.log('[Layout] Sidebar open:', sidebarOpen, 'collapsed:', sidebarCollapsed, 'hovered:', sidebarHovered);
+    log('[Layout] Sidebar open:', sidebarOpen, 'collapsed:', sidebarCollapsed, 'hovered:', sidebarHovered);
   }, [sidebarOpen, sidebarCollapsed, sidebarHovered]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -25,17 +26,33 @@ const Layout = () => {
         onHover={setSidebarHovered}
       />
 
-      {/* Header (full width) */}
-      <Header onMenuClick={() => setSidebarOpen(true)} sidebarCollapsed={sidebarCollapsed && !sidebarHovered} />
+      {/* Backdrop blur overlay - visible when sidebar is open, expanded, or hovered */}
+      {(sidebarOpen || !sidebarCollapsed || sidebarHovered) && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-md z-30 transition-opacity duration-500 ease-out"
+          style={{ WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)' }}
+          onClick={() => {
+            setSidebarOpen(false);
+            setSidebarCollapsed(true);
+            setSidebarHovered(false);
+          }}
+        />
+      )}
 
-      {/* Main content (shift right on large screens to account for fixed sidebar) */}
-      <div className={sidebarCollapsed && !sidebarHovered ? 'lg:ml-20' : 'lg:ml-64'}>
+      {/* Header (fixed, full width) */}
+      <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} sidebarCollapsed={sidebarCollapsed && !sidebarHovered} />
+
+      {/* Main content - always has left padding on desktop to avoid sidebar overlap */}
+      <div
+        className={`w-full lg:pl-20 ${sidebarOpen ? 'pointer-events-none select-none' : ''
+          }`}
+        style={{ paddingTop: '4rem' }}
+      >
         {/* Page content */}
         <main className="p-6">
           <Outlet />
         </main>
       </div>
-      {/* Mobile sidebar overlay (optional, keep for mobile only) */}
     </div>
   );
 };

@@ -4,6 +4,8 @@ const User = require('../models/User');
 const { validate } = require('../middleware/validation');
 const { authenticate } = require('../middleware/auth');
 const { handleAsync, sendSuccess, sendError } = require('../utils/responseHandler');
+const { createNotification, NotificationTypes } = require('../utils/notificationService');
+const { log } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -28,33 +30,36 @@ router.post('/register', validate('user'), handleAsync(async (req, res) => {
   const user = new User({ name, email, password, role });
   await user.save();
 
+  // Create welcome notification
+  await createNotification(user._id, NotificationTypes.ACCOUNT_CREATED(user.name));
+
   const token = generateToken(user);
 
   sendSuccess(res, {
     user: user.toJSON(),
     token
   }, 'User registered successfully', 201);
-  console.log('POST /register', req.body);
-  console.log('Register failed: user exists', { email });
-  console.log('Register successful:', { email });
+  log('POST /register', req.body);
+  log('Register failed: user exists', { email });
+  log('Register successful:', { email });
 }));
 
 // Login user
 router.post('/login', validate('login'), handleAsync(async (req, res) => {
   // Logging for debugging
-  console.log('Login attempt:', req.body);
+  log('Login attempt:', req.body);
 
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
   if (!user || !user.isActive) {
-    console.log('Login failed: user not found or inactive', { email });
+    log('Login failed: user not found or inactive', { email });
     return sendError(res, 'Invalid credentials or account deactivated', 401);
   }
 
   const isValidPassword = await user.comparePassword(password);
   if (!isValidPassword) {
-    console.log('Login failed: invalid password', { email });
+    log('Login failed: invalid password', { email });
     return sendError(res, 'Invalid credentials', 401);
   }
 
@@ -63,7 +68,7 @@ router.post('/login', validate('login'), handleAsync(async (req, res) => {
 
   const token = generateToken(user);
 
-  console.log('Login successful:', { email });
+  log('Login successful:', { email });
   sendSuccess(res, {
     user: user.toJSON(),
     token
@@ -73,7 +78,7 @@ router.post('/login', validate('login'), handleAsync(async (req, res) => {
 // Get current user profile
 router.get('/me', authenticate, handleAsync(async (req, res) => {
   sendSuccess(res, { user: req.user.toJSON() });
-  console.log('GET /me', { userId: req.user._id });
+  log('GET /me', { userId: req.user._id });
 }));
 
 // Update user profile
@@ -94,13 +99,13 @@ router.put('/me', authenticate, validate('user', { isUpdate: true }), handleAsyn
   );
 
   sendSuccess(res, { user: user.toJSON() }, 'Profile updated successfully');
-  console.log('PUT /me', { userId: req.user._id, updates: req.body });
+  log('PUT /me', { userId: req.user._id, updates: req.body });
 }));
 
 // Logout (client-side handles token removal)
 router.post('/logout', (req, res) => {
   sendSuccess(res, null, 'Logout successful');
-  console.log('POST /logout', { userId: req.user?._id });
+  log('POST /logout', { userId: req.user?._id });
 });
 
 module.exports = router;

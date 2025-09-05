@@ -3,19 +3,20 @@ const User = require('../models/User');
 const ApiKey = require('../models/ApiKey');
 const Request = require('../models/Request');
 const path = require('path');
+const { log } = require('../utils/logger');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 async function seedData() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    log('Connected to MongoDB');
 
     // Clear existing data
     await User.deleteMany({});
     await ApiKey.deleteMany({});
     await Request.deleteMany({});
-    console.log('Cleared existing data');
+    log('Cleared existing data');
 
     // Create test users
     const admin = new User({
@@ -50,7 +51,7 @@ async function seedData() {
     });
 
     await Promise.all([admin.save(), contributor.save(), viewer.save(), contributor2.save()]);
-    console.log('Created test users');
+    log('Created test users');
 
     // Create test API keys
     const apiKey1 = new ApiKey({
@@ -86,7 +87,7 @@ async function seedData() {
     apiKey4.generateKey();
 
     await Promise.all([apiKey1.save(), apiKey2.save(), apiKey3.save(), apiKey4.save()]);
-    console.log('Created test API keys');
+    log('Created test API keys');
 
     // Create test requests
     const request1 = new Request({
@@ -136,20 +137,20 @@ async function seedData() {
     });
 
     await Promise.all([request1.save(), request2.save(), request3.save(), request4.save()]);
-    console.log('Created test requests');
+    log('Created test requests');
 
-    console.log('✅ Seed data created successfully!');
-    console.log('\n📧 Test Users:');
-    console.log('Admin: admin@test.com / admin123');
-    console.log('Contributor: contributor@test.com / contrib123');
-    console.log('Viewer: viewer@test.com / viewer123');
-    console.log('Contributor 2: john@test.com / john123');
+    log('✅ Seed data created successfully!');
+    log('\n📧 Test Users:');
+    log('Admin: admin@test.com / admin123');
+    log('Contributor: contributor@test.com / contrib123');
+    log('Viewer: viewer@test.com / viewer123');
+    log('Contributor 2: john@test.com / john123');
 
   } catch (error) {
     console.error('❌ Error seeding data:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    log('Disconnected from MongoDB');
   }
 }
 

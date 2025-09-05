@@ -1,4 +1,5 @@
 import React from 'react';
+import { log } from '../utils/helpers';
 
 const LoadingSpinner = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
@@ -9,12 +10,12 @@ const LoadingSpinner = ({ size = 'md', className = '' }) => {
   };
 
   React.useEffect(() => {
-    console.log('[LoadingSpinner] Rendered with size:', size, 'and className:', className);
+    log('[LoadingSpinner] Rendered with size:', size, 'and className:', className);
   }, [size, className]);
 
   return (
     <div className={`flex items-center justify-center ${className}`} data-testid="loading-spinner">
-      <div 
+      <div
         className={`${sizeClasses[size]} border-4 border-gray-200 border-t-primary-600 rounded-full animate-spin`}
         aria-label="Loading"
       ></div>

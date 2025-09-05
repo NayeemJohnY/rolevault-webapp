@@ -1,21 +1,22 @@
 const express = require('express');
 const ApiKey = require('../models/ApiKey');
-const { authenticate, adminOnly, adminOrContributor } = require('../middleware/auth');
+const { canViewAllApiKeys, canCreateAPIKeys, canViewOwnApiKeys, canManageOwnApiKeys } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const { createNotification, NotificationTypes } = require('../utils/notificationService');
 
 const router = express.Router();
 
-// Get API keys (Admin sees all, Contributors see only their own)
-router.get('/', authenticate, adminOrContributor, async (req, res) => {
+// Get API keys (Admin sees all, Contributors see only their own, Viewers see none)
+router.get('/', canViewOwnApiKeys, async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
-    
-    // Build filter based on user role
+
+    // Build filter based on user permissions
     const filter = {};
-    if (req.user.role !== 'admin') {
+    if (!req.user.permissions.includes('rv.apiKeys.viewAll')) {
       filter.userId = req.user._id;
     }
-    
+
     if (search) {
       filter.name = { $regex: search, $options: 'i' };
     }
@@ -43,18 +44,18 @@ router.get('/', authenticate, adminOrContributor, async (req, res) => {
 });
 
 // Get API key by ID
-router.get('/:id', authenticate, adminOrContributor, async (req, res) => {
+router.get('/:id', canViewOwnApiKeys, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
-    
+
     // Non-admin users can only see their own API keys
-    if (req.user.role !== 'admin') {
+    if (!req.user.permissions.includes('rv.apiKeys.viewAll')) {
       filter.userId = req.user._id;
     }
 
     const apiKey = await ApiKey.findOne(filter)
       .populate('userId', 'name email role');
-    
+
     if (!apiKey) {
       return res.status(404).json({ message: 'API key not found' });
     }
@@ -67,53 +68,54 @@ router.get('/:id', authenticate, adminOrContributor, async (req, res) => {
 });
 
 // Create new API key
-router.post('/', 
-  authenticate, 
-  adminOrContributor, 
-  validate('apiKey'), 
-  async (req, res) => {
-    try {
-      const { name, permissions = ['read'], expiresAt } = req.body;
+router.post('/', canCreateAPIKeys, validate('apiKey'), async (req, res) => {
+  try {
 
-      // Create new API key
-      const apiKey = new ApiKey({
-        name,
-        userId: req.user._id,
-        permissions,
-        expiresAt
-      });
+    const { name, permissions = ['read'], expiresAt } = req.body;
 
-      // Generate the key
-      apiKey.generateKey();
-      await apiKey.save();
+    // Create new API key
+    const apiKey = new ApiKey({
+      name,
+      userId: req.user._id,
+      permissions,
+      expiresAt
+    });
 
-      // Populate user info
-      await apiKey.populate('userId', 'name email role');
+    // Generate the key
+    apiKey.generateKey();
+    await apiKey.save();
 
-      res.status(201).json({
-        message: 'API key created successfully',
-        apiKey
-      });
-    } catch (error) {
-      console.error('Error creating API key:', error);
-      res.status(500).json({ message: 'Error creating API key' });
-    }
+    // Create notification for API key creation
+    await createNotification(req.user._id, NotificationTypes.API_KEY_CREATED(apiKey.name));
+
+    // Populate user info
+    await apiKey.populate('userId', 'name email role');
+
+    res.status(201).json({
+      message: 'API key created successfully',
+      apiKey
+    });
+  } catch (error) {
+    console.error('Error creating API key:', error);
+    res.status(500).json({ message: 'Error creating API key' });
   }
+}
 );
 
 // Update API key
-router.put('/:id', authenticate, adminOrContributor, async (req, res) => {
+router.put('/:id', canManageOwnApiKeys, async (req, res) => {
   try {
+
     const filter = { _id: req.params.id };
-    
+
     // Non-admin users can only update their own API keys
-    if (req.user.role !== 'admin') {
+    if (!req.user.permissions.includes('rv.apiKeys.viewAll')) {
       filter.userId = req.user._id;
     }
 
     const { name, permissions, isActive } = req.body;
     const updates = {};
-    
+
     if (name) updates.name = name;
     if (permissions) updates.permissions = permissions;
     if (isActive !== undefined) updates.isActive = isActive;
@@ -139,20 +141,23 @@ router.put('/:id', authenticate, adminOrContributor, async (req, res) => {
 });
 
 // Delete API key
-router.delete('/:id', authenticate, adminOrContributor, async (req, res) => {
+router.delete('/:id', canManageOwnApiKeys, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
-    
-    // Non-admin users can only delete their own API keys
-    if (req.user.role !== 'admin') {
+
+    // Users without rv.apiKeys.deleteAll permission can only delete their own API keys
+    if (!req.user.permissions.includes('rv.apiKeys.deleteAll')) {
       filter.userId = req.user._id;
     }
 
     const apiKey = await ApiKey.findOneAndDelete(filter);
-    
+
     if (!apiKey) {
       return res.status(404).json({ message: 'API key not found' });
     }
+
+    // Create notification for API key deletion
+    await createNotification(req.user._id, NotificationTypes.API_KEY_DELETED(apiKey.name));
 
     res.json({ message: 'API key deleted successfully' });
   } catch (error) {
@@ -162,17 +167,17 @@ router.delete('/:id', authenticate, adminOrContributor, async (req, res) => {
 });
 
 // Regenerate API key
-router.post('/:id/regenerate', authenticate, adminOrContributor, async (req, res) => {
+router.post('/:id/regenerate', canManageOwnApiKeys, async (req, res) => {
   try {
     const filter = { _id: req.params.id };
-    
-    // Non-admin users can only regenerate their own API keys
-    if (req.user.role !== 'admin') {
+
+    // Users without rv.apiKeys.viewAll permission can only regenerate their own API keys
+    if (!req.user.permissions.includes('rv.apiKeys.viewAll')) {
       filter.userId = req.user._id;
     }
 
     const apiKey = await ApiKey.findOne(filter);
-    
+
     if (!apiKey) {
       return res.status(404).json({ message: 'API key not found' });
     }
@@ -182,7 +187,7 @@ router.post('/:id/regenerate', authenticate, adminOrContributor, async (req, res
     apiKey.usage.totalRequests = 0;
     apiKey.usage.lastRequest = null;
     apiKey.lastUsed = null;
-    
+
     await apiKey.save();
     await apiKey.populate('userId', 'name email role');
 
@@ -196,8 +201,8 @@ router.post('/:id/regenerate', authenticate, adminOrContributor, async (req, res
   }
 });
 
-// Get API key statistics (Admin only)
-router.get('/stats/overview', authenticate, adminOnly, async (req, res) => {
+// Get API key statistics
+router.get('/stats/overview', canViewAllApiKeys, async (req, res) => {
   try {
     const stats = await ApiKey.aggregate([
       {
@@ -205,10 +210,10 @@ router.get('/stats/overview', authenticate, adminOnly, async (req, res) => {
           _id: null,
           total: { $sum: 1 },
           active: { $sum: { $cond: ['$isActive', 1, 0] } },
-          expired: { 
-            $sum: { 
-              $cond: [{ $lt: ['$expiresAt', new Date()] }, 1, 0] 
-            } 
+          expired: {
+            $sum: {
+              $cond: [{ $lt: ['$expiresAt', new Date()] }, 1, 0]
+            }
           },
           totalRequests: { $sum: '$usage.totalRequests' }
         }

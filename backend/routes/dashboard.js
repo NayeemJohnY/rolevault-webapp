@@ -7,20 +7,20 @@ const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get dashboard data based on user role
+// Get dashboard data based on user permissions
 router.get('/', authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-    const userRole = req.user.role;
+    const userPermissions = req.user.permissions;
 
     let dashboardData = {
       user: req.user,
       widgets: []
     };
 
-    // Pending requests widget - show for all roles (filtered by role)
+    // Pending requests widget - show for all users (filtered by permissions)
     let pendingRequestsQuery = { status: 'pending' };
-    if (userRole !== 'admin') {
+    if (!userPermissions.includes('rv.requests.viewAll')) {
       // Non-admins see only their own pending requests
       pendingRequestsQuery.requestedBy = userId;
     }
@@ -38,7 +38,6 @@ router.get('/', authenticate, async (req, res) => {
       data: {
         requests: pendingRequests,
         count: pendingRequests.length,
-        isAdmin: userRole === 'admin'
       }
     });
 
@@ -69,43 +68,6 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Get recent activity across the system (Admin only)
-router.get('/activity', authenticate, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    // Get recent users
-    const recentUsers = await User.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('name email role createdAt');
-
-    // Get recent files
-    const recentFiles = await File.find()
-      .populate('uploadedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('originalName uploadedBy createdAt');
-
-    // Get recent requests
-    const recentRequests = await Request.find()
-      .populate('requestedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('title type status requestedBy createdAt');
-
-    res.json({
-      recentUsers,
-      recentFiles,
-      recentRequests
-    });
-  } catch (error) {
-    console.error('Error fetching activity data:', error);
-    res.status(500).json({ message: 'Error fetching activity data' });
-  }
-});
 
 // Update user theme preference
 router.patch('/theme', authenticate, async (req, res) => {

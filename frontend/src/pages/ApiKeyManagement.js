@@ -22,7 +22,7 @@ const ApiKeyManagement = () => {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [selectedKey, setSelectedKey] = useState(null);
 
-  const { isAdmin } = useAuth();
+  const { canViewAllAPIKeys } = useAuth();
 
   // Use table data hook for pagination, search, and filtering
   const {
@@ -119,7 +119,7 @@ const ApiKeyManagement = () => {
             API Key Management
           </h1>
           <p className="page-apikey-management__description page-description text-gray-600 dark:text-gray-400">
-            {isAdmin() ? 'Manage all API keys' : 'Manage your API keys'}
+            {canViewAllAPIKeys() ? 'Manage all API keys' : 'Manage your API keys'}
           </p>
         </div>
         <button
@@ -154,7 +154,7 @@ const ApiKeyManagement = () => {
                 <th className="page-apikey-management__th header-cell table-header">Expiry</th>
                 <th className="page-apikey-management__th header-cell table-header">Usage</th>
                 <th className="page-apikey-management__th header-cell table-header">Created</th>
-                {isAdmin() && <th className="page-apikey-management__th header-cell table-header">Owner</th>}
+                {canViewAllAPIKeys() && <th className="page-apikey-management__th header-cell table-header">Owner</th>}
                 <th className="page-apikey-management__th header-cell table-header">Actions</th>
               </tr>
             </thead>
@@ -203,7 +203,7 @@ const ApiKeyManagement = () => {
                     <td className="page-apikey-management__cell table-cell">
                       {formatDate(apiKey.createdAt)}
                     </td>
-                    {isAdmin() && (
+                    {canViewAllAPIKeys() && (
                       <td className="page-apikey-management__cell table-cell">
                         <div>
                           <p className="text-sm text-gray-900 dark:text-white">
@@ -288,7 +288,7 @@ const ApiKeyManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={isAdmin() ? "8" : "7"} className="page-apikey-management__empty-state empty-state-cell table-cell text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={canViewAllAPIKeys() ? "8" : "7"} className="page-apikey-management__empty-state empty-state-cell table-cell text-center text-gray-500 dark:text-gray-400">
                     No API keys found. Create your first API key to get started.
                   </td>
                 </tr>

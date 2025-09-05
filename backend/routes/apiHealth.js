@@ -1,7 +1,7 @@
 // API Health Endpoint: Returns all backend API routes and supported HTTP methods
 const express = require('express');
 const router = express.Router();
-const { adminOrContributor, authenticate } = require('../middleware/auth');
+const { canViewOwnApiKeys } = require('../middleware/auth');
 
 
 // List of all API endpoints with metadata
@@ -14,21 +14,28 @@ const apiEndpoints = [
                 methods: ['POST'],
                 description: 'Register a new user',
                 authRequired: false,
-                roles: [],
+                permissions: [],
             },
             {
                 path: '/api/auth/login',
                 methods: ['POST'],
                 description: 'Login and receive JWT token',
                 authRequired: false,
-                roles: [],
+                permissions: [],
             },
             {
                 path: '/api/auth/me',
                 methods: ['GET', 'PUT'],
                 description: 'Get or update current user profile',
                 authRequired: true,
-                roles: ['admin', 'contributor', 'viewer'],
+                permissions: [],
+            },
+            {
+                path: '/api/auth/logout',
+                methods: ['POST'],
+                description: 'Logout user',
+                authRequired: true,
+                permissions: [],
             },
         ],
     },
@@ -38,16 +45,16 @@ const apiEndpoints = [
             {
                 path: '/api/users',
                 methods: ['GET', 'POST'],
-                description: 'List all users or create a new user (admin only)',
+                description: 'List all users or create a new user',
                 authRequired: true,
-                roles: ['admin'],
+                permissions: ['rv.users.manage'],
             },
             {
                 path: '/api/users/:id',
                 methods: ['GET', 'PUT', 'DELETE'],
-                description: 'Get, update, or delete a user by ID (admin only)',
+                description: 'Get, update, or delete a user by ID',
                 authRequired: true,
-                roles: ['admin'],
+                permissions: ['rv.users.manage'],
             },
         ],
     },
@@ -59,14 +66,28 @@ const apiEndpoints = [
                 methods: ['GET', 'POST'],
                 description: 'List or create API keys',
                 authRequired: true,
-                roles: ['admin', 'contributor'],
+                permissions: ['rv.apiKeys.view', 'rv.apiKeys.create'],
             },
             {
                 path: '/api/apikeys/:id',
-                methods: ['DELETE'],
-                description: 'Delete an API key',
+                methods: ['GET', 'PUT', 'DELETE'],
+                description: 'Get, update, or delete an API key',
                 authRequired: true,
-                roles: ['admin', 'contributor'],
+                permissions: ['rv.apiKeys.view', 'rv.apiKeys.manage'],
+            },
+            {
+                path: '/api/apikeys/:id/regenerate',
+                methods: ['POST'],
+                description: 'Regenerate an API key',
+                authRequired: true,
+                permissions: ['rv.apiKeys.manage'],
+            },
+            {
+                path: '/api/apikeys/stats/overview',
+                methods: ['GET'],
+                description: 'Get API key statistics overview',
+                authRequired: true,
+                permissions: ['rv.apiKeys.viewAll'],
             },
         ],
     },
@@ -75,17 +96,38 @@ const apiEndpoints = [
         routes: [
             {
                 path: '/api/requests',
-                methods: ['GET', 'POST'],
-                description: 'List or submit requests',
+                methods: ['GET'],
+                description: 'List user\'s own requests',
                 authRequired: true,
-                roles: ['admin', 'contributor', 'viewer'],
+                permissions: ['rv.requests.view'],
+            },
+            {
+                path: '/api/requests',
+                methods: ['POST'],
+                description: 'Submit a new request',
+                authRequired: true,
+                permissions: ['rv.requests.create'],
+            },
+            {
+                path: '/api/requests/review',
+                methods: ['GET'],
+                description: 'List all requests for review',
+                authRequired: true,
+                permissions: ['rv.requests.viewAll'],
+            },
+            {
+                path: '/api/requests/:id',
+                methods: ['GET', 'PUT', 'DELETE'],
+                description: 'Get, update, or delete a specific request',
+                authRequired: true,
+                permissions: ['rv.requests.view', 'rv.requests.create'],
             },
             {
                 path: '/api/requests/:id/review',
-                methods: ['PUT'],
-                description: 'Review a request (admin only)',
+                methods: ['PATCH'],
+                description: 'Review (approve/reject) a request',
                 authRequired: true,
-                roles: ['admin'],
+                permissions: ['rv.requests.approve', 'rv.requests.reject'],
             },
         ],
     },
@@ -97,21 +139,28 @@ const apiEndpoints = [
                 methods: ['POST'],
                 description: 'Upload a file',
                 authRequired: true,
-                roles: ['admin', 'contributor'],
+                permissions: ['rv.files.upload'],
             },
             {
                 path: '/api/files',
                 methods: ['GET'],
                 description: 'List files',
                 authRequired: true,
-                roles: ['admin', 'contributor', 'viewer'],
+                permissions: ['rv.files.download'],
+            },
+            {
+                path: '/api/files/:id',
+                methods: ['GET', 'PUT', 'DELETE'],
+                description: 'Get, update, or delete a file',
+                authRequired: true,
+                permissions: ['rv.files.download', 'rv.files.upload'],
             },
             {
                 path: '/api/files/:id/download',
                 methods: ['GET'],
                 description: 'Download a file',
                 authRequired: true,
-                roles: ['admin', 'contributor', 'viewer'],
+                permissions: ['rv.files.download'],
             },
         ],
     },
@@ -119,38 +168,76 @@ const apiEndpoints = [
         category: 'Dashboard',
         routes: [
             {
-                path: '/api/dashboard/stats',
+                path: '/api/dashboard',
                 methods: ['GET'],
-                description: 'Get dashboard statistics',
+                description: 'Get dashboard data and statistics',
                 authRequired: true,
-                roles: ['admin', 'contributor', 'viewer'],
+                permissions: [],
+            },
+            {
+                path: '/api/dashboard/theme',
+                methods: ['PATCH'],
+                description: 'Update user theme preference',
+                authRequired: true,
+                permissions: [],
+            },
+        ],
+    },
+    {
+        category: 'System',
+        routes: [
+            {
+                path: '/api/health',
+                methods: ['GET'],
+                description: 'API health check and endpoint documentation',
+                authRequired: true,
+                permissions: ['rv.apiKeys.view'],
             },
         ],
     },
 ];
 
 
-// Helper: filter endpoints by role
-function filterEndpointsByRole(endpoints, role) {
+// Helper: filter endpoints by user permissions
+function filterEndpointsByPermissions(endpoints, userPermissions) {
     return endpoints.map(category => ({
         category: category.category,
-        routes: category.routes.filter(route => !route.roles.length || route.roles.includes(role)),
+        routes: category.routes.filter(route => {
+            // If no permissions required, show to all authenticated users
+            if (!route.permissions || route.permissions.length === 0) {
+                return true;
+            }
+            // Check if user has any of the required permissions
+            return route.permissions.some(permission => userPermissions.includes(permission));
+        }),
     })).filter(cat => cat.routes.length > 0);
 }
 
-// GET /api/health (authenticated) - only admin or contributor
-router.get('/api/health', adminOrContributor, (req, res) => {
-    // Use the authenticated user's role for filtering
-    const role = req.user?.role || 'viewer';
+// GET /api/health (authenticated)
+router.get('/api/health', canViewOwnApiKeys, (req, res) => {
+    // Use the authenticated user's permissions for filtering
+    const userPermissions = req.user?.permissions || [];
     const categoryFilter = req.query.category;
-    let endpoints = filterEndpointsByRole(apiEndpoints, role);
+
+    let endpoints = filterEndpointsByPermissions(apiEndpoints, userPermissions);
+
     if (categoryFilter) {
-        endpoints = endpoints.filter(cat => cat.category.toLowerCase() === categoryFilter.toLowerCase());
+        endpoints = endpoints.filter(cat =>
+            cat.category.toLowerCase() === categoryFilter.toLowerCase()
+        );
     }
+
     res.json({
         success: true,
-        message: 'API Health - List of all endpoints',
+        message: 'API Health - List of available endpoints based on your permissions',
+        user: {
+            id: req.user._id,
+            name: req.user.name,
+            role: req.user.role,
+            permissions: userPermissions
+        },
         endpoints,
+        totalEndpoints: endpoints.reduce((acc, cat) => acc + cat.routes.length, 0)
     });
 });
 

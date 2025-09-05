@@ -4,6 +4,7 @@ const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const File = require('../models/File');
+const { log } = require('../utils/logger');
 
 function resolveFilePath(storedPath, filename) {
     const candidates = [
@@ -25,7 +26,7 @@ async function main() {
     }
 
     await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log('Connected to MongoDB');
+    log('Connected to MongoDB');
 
     const files = await File.find({}).select('originalName filename path uploadedBy createdAt');
     const report = [];
@@ -61,11 +62,11 @@ async function main() {
     if (shouldFix) {
         for (const r of report) {
             if (!r.exists && r.resolvedPath) {
-                console.log(`Updating DB for ${r.id} -> ${r.resolvedPath}`);
+                log(`Updating DB for ${r.id} -> ${r.resolvedPath}`);
                 await File.findByIdAndUpdate(r.id, { path: r.resolvedPath });
             }
         }
-        console.log('DB fixes applied where possible');
+        log('DB fixes applied where possible');
     }
 
     await mongoose.disconnect();

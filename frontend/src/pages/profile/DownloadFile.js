@@ -23,7 +23,7 @@ const DownloadFile = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
 
-  const { user } = useAuth();
+  const { user, canMakeFilesPublic } = useAuth();
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -236,7 +236,7 @@ const DownloadFile = () => {
                           <ArrowDownTrayIcon className="w-4 h-4" />
                         </button>
 
-                        {user?.role === 'admin' && (
+                        {canMakeFilesPublic() && (
                           <button
                             onClick={() => toggleFileVisibility(file._id, file.isPublic)}
                             className={`${file.isPublic ? 'text-green-600 hover:text-green-900 dark:text-green-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400'}`}
@@ -247,7 +247,7 @@ const DownloadFile = () => {
                           </button>
                         )}
 
-                        {user?.role === 'admin' || file.uploadedBy?._id === user?._id ? (
+                        {canMakeFilesPublic() || file.uploadedBy?._id === user?._id ? (
                           <button
                             onClick={() => deleteFile(file._id, file.originalName)}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"

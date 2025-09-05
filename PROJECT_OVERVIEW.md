@@ -48,7 +48,6 @@
 - **Drag-and-drop widget system** using @dnd-kit
 - Role-specific dashboard content
 - Statistics and metrics display
-- Recent activity monitoring
 - Quick action buttons based on user role
 
 ### 7. **UI/UX Features**

@@ -3,8 +3,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const File = require('../models/File');
-const { authenticate } = require('../middleware/auth');
+const { canUploadFile, canDownloadFile } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
+const { createNotification, NotificationTypes } = require('../utils/notificationService');
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ function resolveFilePath(storedPath, filename) {
 }
 
 // Upload file
-router.post('/upload', authenticate, upload.single('file'), async (req, res) => {
+router.post('/upload', canUploadFile, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -84,6 +85,9 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
     await file.save();
     await file.populate('uploadedBy', 'name email');
 
+    // Create notification for file upload
+    await createNotification(req.user._id, NotificationTypes.FILE_UPLOADED(file.originalName));
+
     res.status(201).json({
       message: 'File uploaded successfully',
       file
@@ -100,7 +104,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
 });
 
 // Get files (user's own files or public files)
-router.get('/', authenticate, async (req, res) => {
+router.get('/', canDownloadFile, async (req, res) => {
   try {
     const { page = 1, limit = 10, search, type, isPublic } = req.query;
 
@@ -156,7 +160,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get file by ID
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', canDownloadFile, async (req, res) => {
   try {
     const file = await File.findOne({
       _id: req.params.id,
@@ -178,7 +182,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Download file
-router.get('/:id/download', authenticate, async (req, res) => {
+router.get('/:id/download', canDownloadFile, async (req, res) => {
   try {
     const file = await File.findOne({
       _id: req.params.id,
@@ -209,6 +213,9 @@ router.get('/:id/download', authenticate, async (req, res) => {
     file.downloadCount += 1;
     await file.save();
 
+    // Create notification for file download
+    await createNotification(req.user._id, NotificationTypes.FILE_DOWNLOAD(file.originalName));
+
     res.download(resolvedPath, file.originalName);
   } catch (error) {
     console.error('Error downloading file:', error);
@@ -217,16 +224,14 @@ router.get('/:id/download', authenticate, async (req, res) => {
 });
 
 // Update file metadata
-router.put('/:id',
-  authenticate,
-  validate(schemas.fileUpdate),
+router.put('/:id', canUploadFile, validate(schemas.fileUpdate),
   async (req, res) => {
     try {
-      // Build filter based on user role
+      // Build filter based on user permissions
       const filter = { _id: req.params.id };
 
       // Non-admin users can only update their own files
-      if (req.user.role !== 'admin') {
+      if (!req.user.permissions.includes('rv.files.makePublic')) {
         filter.uploadedBy = req.user._id;
       }
 
@@ -237,6 +242,11 @@ router.put('/:id',
       }
 
       const { description, tags, isPublic } = req.body;
+
+      // Check permission to make files public
+      if (isPublic === true && !req.user.permissions.includes('rv.files.makePublic')) {
+        return res.status(403).json({ message: 'You do not have permission to make files public.' });
+      }
 
       if (description !== undefined) file.description = description;
       if (tags !== undefined) file.tags = tags;
@@ -257,7 +267,7 @@ router.put('/:id',
 );
 
 // Delete file
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', canUploadFile, async (req, res) => {
   try {
     const file = await File.findOne({
       _id: req.params.id,
@@ -290,35 +300,5 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
-// Get user's file statistics
-router.get('/stats/user', authenticate, async (req, res) => {
-  try {
-    const stats = await File.aggregate([
-      { $match: { uploadedBy: req.user._id } },
-      {
-        $group: {
-          _id: null,
-          totalFiles: { $sum: 1 },
-          totalSize: { $sum: '$size' },
-          totalDownloads: { $sum: '$downloadCount' },
-          publicFiles: { $sum: { $cond: ['$isPublic', 1, 0] } }
-        }
-      }
-    ]);
-
-    const recentFiles = await File.find({ uploadedBy: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('originalName createdAt size downloadCount');
-
-    res.json({
-      stats: stats[0] || { totalFiles: 0, totalSize: 0, totalDownloads: 0, publicFiles: 0 },
-      recentFiles
-    });
-  } catch (error) {
-    console.error('Error fetching file stats:', error);
-    res.status(500).json({ message: 'Error fetching file statistics' });
-  }
-});
 
 module.exports = router;
