@@ -28,16 +28,8 @@ app.use((req, res, next) => {
 // Security middleware
 app.use(helmet());
 
-// CORS: Allow access from same origin (single server)
-const allowedOrigins = [
-  'http://localhost:5000', // Single server
-  process.env.PRODUCTION_URL
-].filter(Boolean);
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+// Allow CORS from everywhere
+app.use(cors());
 
 // Rate limiting
 const limiter = rateLimit({
