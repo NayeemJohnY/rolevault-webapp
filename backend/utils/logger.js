@@ -1,5 +1,5 @@
 
-export const log = (message, ...args) => {
+const log = (message, ...args) => {
     const timestamp = new Date().toISOString();
     if (args.length > 0) {
         console.log(`[${timestamp}] ${message}`, ...args);
@@ -7,3 +7,7 @@ export const log = (message, ...args) => {
         console.log(`[${timestamp}] ${message}`);
     }
 }
+
+module.exports = {
+    log
+};
