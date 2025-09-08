@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start script for RoleVault - Single Server Implementation with PM2
-# Backend serves frontend on same port (5000)
+# Backend serves frontend on same port
 # Usage: ./start-app.sh [--seed]
 
 set -e
@@ -56,7 +56,8 @@ if [[ "$SEED_DATA" == "true" ]]; then
 fi
 
 echo "✅ RoleVault started successfully!"
-echo "🌐 App: http://localhost:5000"
+APP_PORT=${PORT:-5000}
+echo "🌐 App: http://localhost:$APP_PORT"
 echo "📋 PM2 status: pm2 status"
 echo "📋 Logs: pm2 logs rolevault-app"
 echo "🛑 Stop: ./stop-app.sh"
