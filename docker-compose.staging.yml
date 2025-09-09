@@ -22,7 +22,7 @@ services:
     volumes:
       - ./:/workspace:cached
       - ./backend/uploads:/workspace/backend/uploads
-    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed && touch /workspace/seeded && tail -f /dev/null"
+    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed && touch /workspace/seeded"
     healthcheck:
       test: ["CMD", "test", "-f", "/workspace/seeded"]
       interval: 5s
