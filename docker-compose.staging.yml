@@ -22,7 +22,13 @@ services:
     volumes:
       - ./:/workspace:cached
       - ./backend/uploads:/workspace/backend/uploads
-    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed && tail -f /dev/null"
-
+    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed && touch /workspace/seeded && tail -f /dev/null"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/workspace/seeded"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+      
 volumes:
   mongo-data:
