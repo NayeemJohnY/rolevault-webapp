@@ -9,7 +9,7 @@ services:
       - 27018:27018
 
   app:
-    image: node:18
+    image: node:22
     restart: unless-stopped
     depends_on:
       - mongo

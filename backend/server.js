@@ -12,6 +12,7 @@ const requestRoutes = require('./routes/requests');
 const fileRoutes = require('./routes/files');
 const dashboardRoutes = require('./routes/dashboard');
 const notificationRoutes = require('./routes/notifications');
+const rolesRoutes = require('./routes/roles');
 const apiHealthRoutes = require('./routes/apiHealth');
 const { errorHandler } = require('./utils/responseHandler');
 const { scheduleApiKeyExpirationCheck, scheduleApiKeyExpirationWarning } = require('./utils/scheduledNotifications');
@@ -60,6 +61,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/roles', rolesRoutes);
 app.use(apiHealthRoutes);
 
 // Always serve static frontend files for all non-API routes

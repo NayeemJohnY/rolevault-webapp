@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { getPermissionsForRole, getAllPermissions } = require('../utils/rolePermissions');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -27,58 +28,10 @@ const userSchema = new mongoose.Schema({
   },
   permissions: {
     type: [String],
-    enum: [
-      'rv.requests.create',
-      'rv.requests.view',
-      'rv.requests.viewAll',
-      'rv.requests.approve',
-      'rv.requests.reject',
-      'rv.files.upload',
-      'rv.files.download',
-      'rv.files.makePublic',
-      'rv.apiKeys.create',
-      'rv.apiKeys.view',
-      'rv.apiKeys.manage',
-      'rv.apiKeys.viewAll',
-      'rv.apiKeys.deleteAll',
-      'rv.users.manage',
-    ],
+    enum: getAllPermissions(),
     default: function () {
       // Set default permissions based on role for backward compatibility
-      switch (this.role) {
-        case 'admin':
-          return [
-            'rv.requests.viewAll',
-            'rv.requests.approve',
-            'rv.requests.reject',
-            'rv.files.upload',
-            'rv.files.download',
-            'rv.files.makePublic',
-            'rv.apiKeys.create',
-            'rv.apiKeys.view',
-            'rv.apiKeys.manage',
-            'rv.apiKeys.viewAll',
-            'rv.apiKeys.deleteAll',
-            'rv.users.manage',
-          ];
-        case 'contributor':
-          return [
-            'rv.files.upload',
-            'rv.files.download',
-            'rv.requests.create',
-            'rv.requests.view',
-            'rv.apiKeys.create',
-            'rv.apiKeys.view',
-            'rv.apiKeys.manage'
-          ];
-        case 'viewer':
-        default:
-          return [
-            'rv.files.download',
-            'rv.requests.create',
-            'rv.requests.view',
-          ];
-      }
+      return getPermissionsForRole(this.role);
     }
   },
   isActive: {
