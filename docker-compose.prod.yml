@@ -12,7 +12,8 @@ services:
     image: node:18
     restart: unless-stopped
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     working_dir: /workspace
     environment:
       PORT: 5000

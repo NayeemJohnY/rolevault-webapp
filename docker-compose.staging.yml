@@ -6,17 +6,18 @@ services:
     volumes:
       - mongo-data:/data/db
     ports:
-      - 27018:27018
+      - 27017:27017
 
   app:
     image: node:22
     restart: unless-stopped
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     working_dir: /workspace
     environment:
       PORT: 5001
-      MONGODB_URI: mongodb://mongo:27018/staging-role-vault-db
+      MONGODB_URI: mongodb://mongo:27017/staging-role-vault-db
     ports:
       - 5001:5001
     volumes:

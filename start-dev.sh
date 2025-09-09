@@ -11,8 +11,12 @@ cd frontend && npm start &
 if [[ "$SEED_DATA" == "true" ]]; then
     echo "🌱 Seeding database..."
     cd backend
-    npm run seed
+    if npm run seed; then
+        echo "✅ Database seeded successfully!"
+    else
+        echo "❌ Database seeding failed!"
+        exit 1
+    fi
     cd ..
-    echo "✅ Database seeded successfully!"
 fi
 wait
