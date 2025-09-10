@@ -1,5 +1,6 @@
 const Notification = require('../models/Notification');
 const { log } = require('./logger');
+const { sendNotificationToUser } = require('../routes/notifications');
 
 /**
  * Create a notification for a user
@@ -17,6 +18,8 @@ const createNotification = async (userId, message) => {
         });
         await notification.save();
         log(`Notification created for user ${userId}: ${message}`);
+        // Send real-time notification via SSE
+        sendNotificationToUser(userId, notification);
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);

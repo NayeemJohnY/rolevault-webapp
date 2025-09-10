@@ -5,7 +5,11 @@ const User = require('../models/User');
 const auth = (permissions = []) => {
   return async (req, res, next) => {
     try {
-      const token = req.header('Authorization')?.replace('Bearer ', '');
+      // Try to get token from header first, then from query params (for SSE)
+      let token = req.header('Authorization')?.replace('Bearer ', '');
+      if (!token && req.query.token) {
+        token = req.query.token;
+      }
 
       if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });

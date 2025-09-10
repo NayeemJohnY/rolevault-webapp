@@ -19,54 +19,74 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
   const { theme, toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const lastFetchedUserId = useRef(null);
-  const pollingIntervalRef = useRef(null);
+  const sseRef = useRef(null);
   const navigate = useNavigate();
 
-  // Initial fetch and setup polling
+  // Setup Server-Sent Events for notifications
   useEffect(() => {
     if (!user || lastFetchedUserId.current === user._id) return;
     lastFetchedUserId.current = user._id;
 
-    log('[Header] Setting up notifications for user:', user);
+    log('[Header] Setting up SSE notifications for user:', user);
 
-    // Fetch notifications function
-    const fetchNotifications = async () => {
-      if (!user) return;
+    // Close previous SSE connection if any
+    if (sseRef.current) {
+      sseRef.current.close();
+    }
 
+    // Initial fetch of existing notifications
+    const fetchInitialNotifications = async () => {
       try {
         const response = await axios.get('/api/notifications');
         setNotifications(response?.data?.notifications || []);
+        log('[Header] Initial notifications loaded:', response?.data?.notifications?.length);
       } catch (err) {
-        console.error('Failed to fetch notifications:', err);
+        console.error('Failed to fetch initial notifications:', err);
       }
     };
 
-    // Initial fetch
-    setLoadingNotifications(true);
-    fetchNotifications().finally(() => setLoadingNotifications(false));
+    fetchInitialNotifications();
 
-    // Set up polling every 15 seconds (reduced from 30 for better responsiveness)
-    pollingIntervalRef.current = setInterval(fetchNotifications, 15000);
+    // Open SSE connection with token in URL
+    const token = localStorage.getItem('token');
+    const sse = new window.EventSource(`/api/notifications/stream?token=${token}`);
+    sseRef.current = sse;
 
-    // Cleanup function
+    sse.onopen = () => {
+      log('[Header] SSE connection opened, readyState:', sse.readyState);
+    };
+
+    sse.onmessage = (event) => {
+      try {
+        const notification = JSON.parse(event.data);
+        log('[Header] SSE notification received:', notification);
+
+        // Skip connection messages
+        if (notification.type === 'connected') {
+          log('[Header] SSE connected successfully');
+          return;
+        }
+
+        setNotifications(prev => [notification, ...prev]);
+      } catch (err) {
+        console.error('Failed to parse SSE notification:', err);
+      }
+    };
+
+    sse.onerror = (err) => {
+      log('[Header] SSE connection error, readyState:', sse.readyState, 'error:', err);
+      sse.close();
+    };
+
+    // Cleanup on unmount or user change
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
+      if (sseRef.current) {
+        sseRef.current.close();
+        sseRef.current = null;
       }
     };
   }, [user]);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
 
   // Log notification toggle
   const handleNotificationToggle = () => {
@@ -131,36 +151,13 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
             {/* Notifications dropdown */}
             {showNotifications && (
               <div className="header__notification-dropdown absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                <div className="header__notification-header p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="header__notification-header p-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Notifications
                   </h3>
-                  <button
-                    onClick={async () => {
-                      setLoadingNotifications(true);
-                      try {
-                        const response = await axios.get('/api/notifications');
-                        setNotifications(response?.data?.notifications || []);
-                      } catch (err) {
-                        console.error('Failed to refresh notifications:', err);
-                      } finally {
-                        setLoadingNotifications(false);
-                      }
-                    }}
-                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    title="Refresh notifications"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </button>
                 </div>
                 <div className="header__notification-list max-h-64 overflow-y-auto">
-                  {loadingNotifications ? (
-                    <div className="header__notification-empty p-4 text-center text-gray-500 dark:text-gray-400">
-                      Loading notifications...
-                    </div>
-                  ) : notifications.length > 0 ? (
+                  {notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <div
                         key={notification._id || notification.id}

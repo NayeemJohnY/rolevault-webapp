@@ -46,7 +46,7 @@
         "react-scripts": "^5.0.1",
         "tailwindcss": "^3.4.10"
     },
-    "proxy": "http://localhost:5000",
+    "proxy": "http://localhost:5001",
     "resolutions": {
         "eslint": "8.57.1"
     }
