@@ -23,19 +23,6 @@ done
 
 echo "🚀 Starting RoleVault in $MODE mode..."
 
-# Seed database if flag was provided
-if [[ "$SEED_DATA" == "true" ]]; then
-    echo "🌱 Seeding database..."
-    cd backend
-    if npm run seed; then
-        echo "✅ Database seeded successfully!"
-    else
-        echo "❌ Database seeding failed!"
-        exit 1
-    fi
-    cd ..
-fi
-
 
 # Install dependencies
 echo "📦 Installing dependencies..."
@@ -49,6 +36,21 @@ if [ ! -d "frontend/node_modules" ]; then
     echo "Installing frontend dependencies..."
     cd frontend && npm install && cd ..
 fi
+
+
+# Seed database if flag was provided
+if [[ "$SEED_DATA" == "true" ]]; then
+    echo "🌱 Seeding database..."
+    cd backend
+    if npm run seed; then
+        echo "✅ Database seeded successfully!"
+    else
+        echo "❌ Database seeding failed!"
+        exit 1
+    fi
+    cd ..
+fi
+
 
 if [[ "$MODE" == "dev" ]]; then
     echo "🛠 Starting in development mode..."
