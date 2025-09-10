@@ -75,7 +75,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  log(`🚀 Server running on port ${PORT}`);
+  log(`🚀 RoleVault started successfully on port ${PORT}`);
 
   // Initialize notification schedulers
   scheduleApiKeyExpirationCheck();
