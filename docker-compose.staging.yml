@@ -21,7 +21,7 @@ services:
     volumes:
       - ./:/workspace:cached
       - ./backend/uploads:/workspace/backend/uploads
-    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed && tail -f /dev/null"
+    command: /bin/bash -c "chmod +x /workspace/start-app.sh && /workspace/start-app.sh --seed"
       
 volumes:
   mongo-data:

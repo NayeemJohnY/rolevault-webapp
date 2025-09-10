@@ -140,7 +140,7 @@ async function seedData() {
     log('Created test requests');
 
     log('✅ Seed data created successfully!');
-    log('\n📧 Test Users:');
+    log('📧 Test Users:');
     log('Admin: admin@test.com / admin123');
     log('Contributor: contributor@test.com / contrib123');
     log('Viewer: viewer@test.com / viewer123');

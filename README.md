@@ -17,19 +17,16 @@
 
 ## 🚀 Quick Start
 
-### Method 1: Using Scripts with PM2 (Recommended)
+### Method 1: Using Scripts
 ```bash
 # Make scripts executable (Linux/Mac)
-chmod +x start-app.sh stop-app.sh
+chmod +x start-app.sh
 
 # Start the application
 ./start-app.sh
 
 # Access the app
 # Open http://localhost:5000 in your browser
-
-# To stop
-./stop-app.sh
 ```
 
 ### Method 2: Using npm scripts
@@ -79,8 +76,7 @@ npm start
 Before running the project, make sure you have:
 
 1. **Node.js** (v16 or higher) and **npm**
-2. **PM2** (will be auto-installed if not present)
-3. **MongoDB Atlas account** (cloud database)
+2. **MongoDB Atlas account** (cloud database)
 
 ## ⚙️ Environment Setup
 
@@ -99,34 +95,6 @@ MONGODB_URI=mongodb_connection_string
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRE=7d
 MAX_FILE_SIZE=10485760
-```
-
-## 📋 PM2 Process Management
-
-Once started with `./start-app.sh`, you can manage the application using PM2 commands:
-
-```bash
-# View running processes
-pm2 status
-
-# View logs
-pm2 logs rolevault-app
-
-# View real-time logs
-pm2 logs rolevault-app --lines 50
-
-# Restart the app
-pm2 restart rolevault-app
-
-# Stop the app
-pm2 stop rolevault-app
-
-# Delete the app from PM2
-pm2 delete rolevault-app
-
-# Save PM2 process list (auto-restart after reboot)
-pm2 save
-pm2 startup
 ```
 
 # Frontend
