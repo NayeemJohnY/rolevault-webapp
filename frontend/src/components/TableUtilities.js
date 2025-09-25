@@ -88,8 +88,37 @@ export const DataTableSearchFilter = ({
     filters = [],
     selectedFilters = {},
     onFilterChange,
-    placeholder = 'Search records...'
+    placeholder = 'Search records...',
+    debounceMs = 400
 }) => {
+    // Local controlled input so typing is immediately responsive while we debounce
+    const [localSearch, setLocalSearch] = React.useState(searchValue || '');
+    const debounceRef = React.useRef(null);
+
+    // Keep local input in sync when parent updates searchValue (e.g., reset)
+    React.useEffect(() => {
+        setLocalSearch(searchValue || '');
+    }, [searchValue]);
+
+    const handleInputChange = (value) => {
+        setLocalSearch(value);
+
+        // debounce the parent callback
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+        debounceRef.current = setTimeout(() => {
+            onSearchChange(value);
+        }, debounceMs);
+    };
+
+    // cleanup on unmount
+    React.useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, []);
+
     return (
         <div className="data-table__search-filter table-search-filter-wrapper flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             {/* Search Input */}
@@ -99,8 +128,8 @@ export const DataTableSearchFilter = ({
                 </div>
                 <input
                     type="text"
-                    value={searchValue}
-                    onChange={(e) => onSearchChange(e.target.value)}
+                    value={localSearch}
+                    onChange={(e) => handleInputChange(e.target.value)}
                     placeholder={placeholder}
                     className="data-table__search-input search-input w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />

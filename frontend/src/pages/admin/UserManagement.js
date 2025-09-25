@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DataTableSearchFilter, DataTablePagination, useTableData } from '../../components/TableUtilities';
+import { DataTableSearchFilter, DataTablePagination } from '../../components/TableUtilities';
 import Modal from 'react-modal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -12,18 +12,14 @@ const UserManagement = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
   const [creating, setCreating] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
-
-  // Use table data hook for pagination, search, and filtering
-  const {
-    paginatedData: paginatedUsers,
-    searchQuery,
-    setSearchQuery,
-    filters,
-    updateFilter,
-    pageInfo,
-    setCurrentPage,
-    updatePageSize
-  } = useTableData(users, 10);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const [pageSize, setPageSize] = useState(10);
 
   // Filter options for role filter
   const filterOptions = [
@@ -50,6 +46,29 @@ const UserManagement = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleSearchChange = (query) => {
+    // Child component debounces and calls this handler with the final value.
+    setSearchQuery(query);
+    fetchUsers(1, pageSize, query, selectedFilters); // Reset to page 1 when searching
+  };
+
+  const handleFilterChange = (filterKey, value) => {
+    const newFilters = { ...selectedFilters, [filterKey]: value };
+    setSelectedFilters(newFilters);
+    fetchUsers(1, pageSize, searchQuery, newFilters); // Reset to page 1 when filtering
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, current: newPage }));
+    fetchUsers(newPage, pageSize, searchQuery, selectedFilters);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to page 1
+    fetchUsers(1, newSize, searchQuery, selectedFilters);
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -58,6 +77,8 @@ const UserManagement = () => {
       setUsers([response.data.user, ...users]);
       toast.success('User created successfully');
       closeModal();
+      // Refresh the current page to show updated data
+      fetchUsers(pagination.current, pageSize, searchQuery, selectedFilters);
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to create user');
     } finally {
@@ -65,15 +86,43 @@ const UserManagement = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const initializedRef = React.useRef(false);
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      fetchUsers(1, 10, '', {}); // Use default pageSize of 10
+    }
+  }, []); // Only run on mount
+
+  // ...existing code...
+
+  const fetchUsers = async (page = 1, limit = 10, search = '', filters = {}) => {
     try {
-      const response = await axios.get('/api/users');
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString()
+      });
+
+      if (search) params.append('search', search);
+      if (filters.role) params.append('role', filters.role);
+
+      const response = await axios.get(`/api/users?${params}`);
+
       setUsers(response.data.users || []);
+
+      // Ensure pagination data has proper structure
+      const paginationData = response.data.pagination || {
+        current: 1,
+        pages: 1,
+        total: 0
+      };
+
+      setPagination(paginationData);
+
     } catch (error) {
+      console.error('Error fetching users:', error);
       toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
@@ -89,9 +138,19 @@ const UserManagement = () => {
         setConfirmDialog({ ...confirmDialog, open: false });
         try {
           await axios.delete(`/api/users/${userId}`);
-          setUsers(users.filter(u => u._id !== userId));
           toast.success('User deleted successfully');
+
+          // If we're on the last page and there's only one item, go to previous page
+          let newPage = pagination.current;
+          if (users.length === 1 && pagination.current > 1) {
+            newPage = pagination.current - 1;
+            setPagination(prev => ({ ...prev, current: newPage }));
+          }
+
+          // Refresh the data with potentially updated page
+          fetchUsers(newPage, pageSize, searchQuery, selectedFilters);
         } catch (error) {
+          console.error('Error deleting user:', error);
           toast.error('Failed to delete user');
         }
       }
@@ -119,10 +178,10 @@ const UserManagement = () => {
       {/* Search and Filter Controls */}
       <DataTableSearchFilter
         searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         filters={filterOptions}
-        selectedFilters={filters}
-        onFilterChange={updateFilter}
+        selectedFilters={selectedFilters}
+        onFilterChange={handleFilterChange}
         placeholder="Search users by name, email, or role..."
       />
 
@@ -231,42 +290,57 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody className="page-user-management__table-body table-body bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {paginatedUsers.map((userItem) => (
-              <tr key={userItem._id} className="page-user-management__row table-row">
-                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  {userItem.name}
-                </td>
-                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {userItem.email}
-                </td>
-                <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap">
-                  <span className={`page-user-management__role-badge role-badge inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
-                    userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                    {userItem.role}
-                  </span>
-                </td>
-                <td className="page-user-management__cell actions-cell px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => deleteUser(userItem._id)}
-                    className="page-user-management__delete-btn delete-user-button text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                    data-testid={`delete-user-${userItem._id}`}
-                  >
-                    Delete
-                  </button>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  {loading ? 'Loading users...' : 'No users found'}
                 </td>
               </tr>
-            ))}
+            ) : (
+              users.map((userItem) => (
+                <tr key={userItem._id} className="page-user-management__row table-row">
+                  <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    {userItem.name}
+                  </td>
+                  <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {userItem.email}
+                  </td>
+                  <td className="page-user-management__cell data-cell px-6 py-4 whitespace-nowrap">
+                    <span className={`page-user-management__role-badge role-badge inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      userItem.role === 'contributor' ? 'bg-green-100 text-green-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                      {userItem.role}
+                    </span>
+                  </td>
+                  <td className="page-user-management__cell actions-cell px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => deleteUser(userItem._id)}
+                      className="page-user-management__delete-btn delete-user-button text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                      data-testid={`delete-user-${userItem._id}`}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 
-        {/* Pagination */}
-        <DataTablePagination
-          pageInfo={pageInfo}
-          onPageUpdate={setCurrentPage}
-          onSizeUpdate={updatePageSize}
-        />
+        {/* Pagination - only show if there are users */}
+        {users.length > 0 && (
+          <DataTablePagination
+            pageInfo={{
+              currentPage: pagination.current,
+              totalPages: pagination.pages,
+              totalRecords: pagination.total,
+              pageSize: pageSize
+            }}
+            onPageUpdate={handlePageChange}
+            onSizeUpdate={handlePageSizeChange}
+          />
+        )}
       </div>
     </div>
   );
