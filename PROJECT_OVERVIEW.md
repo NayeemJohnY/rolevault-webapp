@@ -59,7 +59,7 @@
 
 ## 🛠️ What You Can Do
 
-### As an **Admin** (`admin@test.com` / `admin123`):
+### As an **Admin** (`admin@rolevault.com` / `admin123`):
 - ✅ Manage all users (view, delete)
 - ✅ View and manage all API keys system-wide
 - ✅ Approve/reject all user requests
@@ -67,7 +67,7 @@
 - ✅ Upload and download files
 - ✅ Full dashboard access with admin widgets
 
-### As a **Contributor** (`contributor@test.com` / `contrib123`):
+### As a **Contributor** (`contributor@rolevault.com` / `contrib123`):
 - ✅ Create and manage own API keys
 - ✅ Upload files with metadata
 - ✅ Download files (public + own private files)
@@ -75,7 +75,7 @@
 - ✅ Request role upgrades
 - ✅ Access contributor-specific dashboard
 
-### As a **Viewer** (`viewer@test.com` / `viewer123`):
+### As a **Viewer** (`viewer@rolevault.com` / `viewer123`):
 - ✅ View own profile and update preferences
 - ✅ Download public files only
 - ✅ Submit requests for access/upgrades

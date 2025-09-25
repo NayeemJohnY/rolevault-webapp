@@ -21,7 +21,7 @@ async function seedData() {
     // Create test users
     const admin = new User({
       name: 'Admin User',
-      email: 'admin@test.com',
+      email: 'admin@rolevault.com',
       password: 'admin123',
       role: 'admin',
       preferences: { theme: 'dark', notifications: true }
@@ -29,7 +29,7 @@ async function seedData() {
 
     const contributor = new User({
       name: 'Contributor User',
-      email: 'contributor@test.com',
+      email: 'contributor@rolevault.com',
       password: 'contrib123',
       role: 'contributor',
       preferences: { theme: 'light', notifications: true }
@@ -37,7 +37,7 @@ async function seedData() {
 
     const viewer = new User({
       name: 'Viewer User',
-      email: 'viewer@test.com',
+      email: 'viewer@rolevault.com',
       password: 'viewer123',
       role: 'viewer',
       preferences: { theme: 'light', notifications: false }
@@ -45,7 +45,7 @@ async function seedData() {
 
     const contributor2 = new User({
       name: 'John Contributor',
-      email: 'john@test.com',
+      email: 'john@rolevault.com',
       password: 'john123',
       role: 'contributor'
     });
@@ -141,10 +141,10 @@ async function seedData() {
 
     log('✅ Seed data created successfully!');
     log('📧 Test Users:');
-    log('Admin: admin@test.com / admin123');
-    log('Contributor: contributor@test.com / contrib123');
-    log('Viewer: viewer@test.com / viewer123');
-    log('Contributor 2: john@test.com / john123');
+    log('Admin: admin@rolevault.com / admin123');
+    log('Contributor: contributor@rolevault.com / contrib123');
+    log('Viewer: viewer@rolevault.com / viewer123');
+    log('Contributor 2: john@rolevault.com / john123');
 
   } catch (error) {
     console.error('❌ Error seeding data:', error);

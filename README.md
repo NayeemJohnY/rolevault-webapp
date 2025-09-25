@@ -107,9 +107,9 @@ npm start             # Start React frontend
 
 ## 👤 User Roles & Test Users
 
-- **Admin**: admin@test.com / admin123
-- **Contributor**: contributor@test.com / contributor123
-- **Viewer**: viewer@test.com / viewer123
+- **Admin**: admin@rolevault.com / admin123
+- **Contributor**: contributor@rolevault.com / contributor123
+- **Viewer**: viewer@rolevault.com / viewer123
 
 ## 🔑 Features
 

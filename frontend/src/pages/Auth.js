@@ -131,9 +131,9 @@ export default function Auth() {
     };
 
     const testAccounts = [
-        { email: 'admin@test.com', password: 'admin123', role: 'Admin' },
-        { email: 'contributor@test.com', password: 'contrib123', role: 'Contributor' },
-        { email: 'viewer@test.com', password: 'viewer123', role: 'Viewer' }
+        { email: 'admin@rolevault.com', password: 'admin123', role: 'Admin' },
+        { email: 'contributor@rolevault.com', password: 'contrib123', role: 'Contributor' },
+        { email: 'viewer@rolevault.com', password: 'viewer123', role: 'Viewer' }
     ];
 
     const loginWithTestAccount = (email, password) => {
