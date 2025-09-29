@@ -126,6 +126,8 @@ npm start             # Start React frontend
 - Form validation (Joi)
 - Consistent error handling
 - Security headers & rate limiting
+- **Random engagement popups** - Dynamic overlay popups that appear at random intervals across all pages with helpful tips and information
+- **Smart popup management** - User-friendly popup system with snooze functionality and session limits
 
 ## 📁 Project Structure
 

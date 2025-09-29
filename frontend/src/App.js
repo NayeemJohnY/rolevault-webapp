@@ -17,9 +17,15 @@ import ApiHealth from './pages/ApiHealth';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import RandomPopup from './components/RandomPopup';
+import { useRandomPopup } from './hooks/useRandomPopup';
+
 import './index.css';
 
 function App() {
+  // Use default production timing from POPUP_CONFIG
+  const popup = useRandomPopup();
+
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -36,6 +42,13 @@ function App() {
               }}
             />
             <AppRoutes />
+
+            {/* Random Popup Overlay */}
+            <RandomPopup
+              isOpen={popup.isOpen}
+              onClose={popup.close}
+              onDismiss={popup.dismiss}
+            />
           </div>
         </Router>
       </AuthProvider>
@@ -61,10 +74,10 @@ function AppRoutes() {
         path="/login"
         element={!user ? <Auth /> : <Navigate to="/dashboard" replace />}
       />
-        <Route
-          path="/register"
-          element={!user ? <Auth /> : <Navigate to="/dashboard" replace />}
-        />
+      <Route
+        path="/register"
+        element={!user ? <Auth /> : <Navigate to="/dashboard" replace />}
+      />
 
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
