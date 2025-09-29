@@ -94,11 +94,16 @@ export const DataTableSearchFilter = ({
     // Local controlled input so typing is immediately responsive while we debounce
     const [localSearch, setLocalSearch] = React.useState(searchValue || '');
     const debounceRef = React.useRef(null);
+    const [isFocused, setIsFocused] = React.useState(false);
+    const inputRef = React.useRef(null);
 
-    // Keep local input in sync when parent updates searchValue (e.g., reset)
+    // Keep local input in sync when parent updates searchValue (e.g., reset), but avoid
+    // stomping the user's input while they're actively typing (focused).
     React.useEffect(() => {
-        setLocalSearch(searchValue || '');
-    }, [searchValue]);
+        if (!isFocused) {
+            setLocalSearch(searchValue || '');
+        }
+    }, [searchValue, isFocused]);
 
     const handleInputChange = (value) => {
         setLocalSearch(value);
@@ -108,14 +113,46 @@ export const DataTableSearchFilter = ({
             clearTimeout(debounceRef.current);
         }
         debounceRef.current = setTimeout(() => {
+            debounceRef.current = null;
             onSearchChange(value);
         }, debounceMs);
+    };
+
+    const clearSearch = () => {
+        setLocalSearch('');
+        // cancel any pending debounce and notify parent immediately
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+            debounceRef.current = null;
+        }
+        onSearchChange('');
+        // restore focus to input
+        if (inputRef.current) inputRef.current.focus();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            clearSearch();
+        }
+    };
+
+    // If the user blurs the input while typing, flush any pending debounced call so
+    // the parent receives the final value immediately and we don't lose input.
+    const handleBlur = () => {
+        setIsFocused(false);
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+            debounceRef.current = null;
+            onSearchChange(localSearch);
+        }
     };
 
     // cleanup on unmount
     React.useEffect(() => {
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = null;
         };
     }, []);
 
@@ -127,12 +164,28 @@ export const DataTableSearchFilter = ({
                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                    ref={inputRef}
                     type="text"
                     value={localSearch}
                     onChange={(e) => handleInputChange(e.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="data-table__search-input search-input w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="data-table__search-input search-input w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
+
+                {/* Clear button */}
+                {localSearch && (
+                    <button
+                        type="button"
+                        onClick={clearSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        aria-label="Clear search"
+                    >
+                        ✕
+                    </button>
+                )}
             </div>
 
             {/* Filter Dropdowns */}
