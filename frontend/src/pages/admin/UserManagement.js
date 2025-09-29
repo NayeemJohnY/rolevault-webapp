@@ -182,7 +182,7 @@ const UserManagement = () => {
         filters={filterOptions}
         selectedFilters={selectedFilters}
         onFilterChange={handleFilterChange}
-        placeholder="Search users by name, email, or role..."
+        placeholder="Search users by name or email"
       />
 
       <Modal
