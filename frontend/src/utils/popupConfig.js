@@ -3,9 +3,9 @@
  */
 export const POPUP_CONFIG = {
     // Timing configuration (in milliseconds)
-    MIN_DELAY: 5000,      // 5 seconds minimum between popups
-    MAX_DELAY: 10000,     // 10 seconds maximum between popups  
-    INITIAL_DELAY: 5000,  // 5 seconds before first popup appears
+    MIN_DELAY: 10000,      // 5 seconds minimum between popups
+    MAX_DELAY: 15000,     // 10 seconds maximum between popups  
+    INITIAL_DELAY: 10000,  // 5 seconds before first popup appears
 
     // Feature toggles
     ENABLED: true,        // Set to false to disable random popups globally
