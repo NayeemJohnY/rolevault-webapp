@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast, ToastBar } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Auth from './pages/Auth';
@@ -35,13 +35,36 @@ function AppContent() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 4000000,
           style: {
             background: 'var(--toast-bg)',
             color: 'var(--toast-color)',
           },
         }}
-      />
+      >
+        {(t) => (
+          <ToastBar toast={t} style={t.style}>
+            {({ icon, message }) => (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
+                  {icon && <span className="mr-2">{icon}</span>}
+                  <span>{message}</span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast.dismiss(t.id);
+                  }}
+                  className="ml-3 w-6 h-6 flex items-center justify-center text-lg font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-200 ease-in-out"
+                  aria-label="Close notification"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
       <AppRoutes />
 
       {/* Welcome Popup - Shows once after login */}
