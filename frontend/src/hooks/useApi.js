@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { log } from '../utils/helpers';
 
 // Universal hook for API calls
 export const useApi = () => {
@@ -13,9 +12,6 @@ export const useApi = () => {
     setLoading(true);
     setError(null);
 
-    // Log request details
-    log(`[API] ${method} ${url}`, { data, options });
-
     try {
       const config = {
         method,
@@ -26,8 +22,6 @@ export const useApi = () => {
       if (data) config.data = data;
 
       const response = await axios(config);
-      // Log response
-      log(`[API] Response for ${method} ${url}:`, response.data);
 
       // Show success message if provided
       if (options.successMessage) {

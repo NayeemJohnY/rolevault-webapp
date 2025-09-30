@@ -13,11 +13,10 @@ import {
   ArrowLeftStartOnRectangleIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
-import { log } from '../utils/helpers';
+
 
 const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
   const {
-    user,
     logout,
     canUploadFiles,
     canDownloadFiles,
@@ -40,7 +39,6 @@ const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
   };
 
   const handleLogout = () => {
-    log('[Sidebar] Logout clicked. User:', user);
     logout();
     navigate('/login');
   };

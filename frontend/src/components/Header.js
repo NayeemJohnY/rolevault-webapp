@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import axios from 'axios';
-import { formatDate, log } from '../utils/helpers';
+import { formatDate } from '../utils/helpers';
 import {
   Bars3Icon,
   BellIcon,
@@ -28,8 +28,6 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
     if (!user || lastFetchedUserId.current === user._id) return;
     lastFetchedUserId.current = user._id;
 
-    log('[Header] Setting up SSE notifications for user:', user);
-
     // Close previous SSE connection if any
     if (sseRef.current) {
       sseRef.current.close();
@@ -40,7 +38,6 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
       try {
         const response = await axios.get('/api/notifications');
         setNotifications(response?.data?.notifications || []);
-        log('[Header] Initial notifications loaded:', response?.data?.notifications?.length);
       } catch (err) {
         console.error('Failed to fetch initial notifications:', err);
       }
@@ -53,18 +50,12 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
     const sse = new window.EventSource(`/api/notifications/stream?token=${token}`);
     sseRef.current = sse;
 
-    sse.onopen = () => {
-      log('[Header] SSE connection opened, readyState:', sse.readyState);
-    };
-
     sse.onmessage = (event) => {
       try {
         const notification = JSON.parse(event.data);
-        log('[Header] SSE notification received:', notification);
 
         // Skip connection messages
         if (notification.type === 'connected') {
-          log('[Header] SSE connected successfully');
           return;
         }
 
@@ -75,7 +66,6 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
     };
 
     sse.onerror = (err) => {
-      log('[Header] SSE connection error, readyState:', sse.readyState, 'error:', err);
       sse.close();
     };
 
@@ -90,10 +80,7 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
 
   // Log notification toggle
   const handleNotificationToggle = () => {
-    setShowNotifications((prev) => {
-      log('[Header] Notifications toggled:', !prev);
-      return !prev;
-    });
+    setShowNotifications(prev => !prev);
   };
 
   return (
@@ -122,7 +109,6 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
           {/* Theme toggle */}
           <button
             onClick={() => {
-              log('[Header] Theme toggle clicked. Previous theme:', theme);
               toggleTheme();
             }}
             className="header__theme-toggle p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-200"

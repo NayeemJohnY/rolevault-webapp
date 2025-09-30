@@ -1,13 +1,12 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { log } from '../utils/helpers';
+
 
 const ProtectedRoute = ({ children, permissions = [] }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    log('[ProtectedRoute] Loading user...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-gray-200 border-t-primary-600 rounded-full animate-spin"></div>
@@ -16,7 +15,6 @@ const ProtectedRoute = ({ children, permissions = [] }) => {
   }
 
   if (!user) {
-    log('[ProtectedRoute] No user found. Redirecting to login.');
     return <Navigate to="/login" replace />;
   }
 
@@ -24,7 +22,6 @@ const ProtectedRoute = ({ children, permissions = [] }) => {
   if (permissions.length > 0) {
     const hasPermission = permissions.some(permission => user.permissions?.includes(permission));
     if (!hasPermission) {
-      log('[ProtectedRoute] Access denied for user:', user);
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
@@ -41,7 +38,6 @@ const ProtectedRoute = ({ children, permissions = [] }) => {
   }
 
 
-  log('[ProtectedRoute] Access granted for user:', user);
   return children;
 };
 

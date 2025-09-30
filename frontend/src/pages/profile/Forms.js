@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { log } from '../utils/helpers';
+
 
 const ProfileInformation = () => {
   const [formData, setFormData] = useState({
@@ -74,7 +74,6 @@ const ProfileInformation = () => {
 
     // Simulate API call
     setTimeout(() => {
-      log('Form submitted:', formData);
       toast.success('Form submitted successfully!');
       setSubmitLoading(false);
     }, 1500);

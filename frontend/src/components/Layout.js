@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { log } from '../utils/helpers';
+
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [sidebarHovered, setSidebarHovered] = useState(false);
 
-  // Log sidebar state changes
-  React.useEffect(() => {
-    log('[Layout] Sidebar open:', sidebarOpen, 'collapsed:', sidebarCollapsed, 'hovered:', sidebarHovered);
-  }, [sidebarOpen, sidebarCollapsed, sidebarHovered]);
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">

@@ -1,5 +1,4 @@
 import React from 'react';
-import { log } from '../utils/helpers';
 
 const LoadingSpinner = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
@@ -8,10 +7,6 @@ const LoadingSpinner = ({ size = 'md', className = '' }) => {
     lg: 'w-12 h-12',
     xl: 'w-16 h-16'
   };
-
-  React.useEffect(() => {
-    log('[LoadingSpinner] Rendered with size:', size, 'and className:', className);
-  }, [size, className]);
 
   return (
     <div className={`flex items-center justify-center ${className}`} data-testid="loading-spinner">
