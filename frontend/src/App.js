@@ -35,7 +35,7 @@ function AppContent() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000000,
+          duration: 5000,
           style: {
             background: 'var(--toast-bg)',
             color: 'var(--toast-color)',
@@ -45,7 +45,7 @@ function AppContent() {
         {(t) => (
           <ToastBar toast={t} style={t.style}>
             {({ icon, message }) => (
-              <div className="flex items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full" role='status'>
                 <div className="flex items-center">
                   {icon && <span className="mr-2">{icon}</span>}
                   <span>{message}</span>
