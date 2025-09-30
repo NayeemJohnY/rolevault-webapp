@@ -2,103 +2,43 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     POPUP_CONFIG,
     shouldShowPopup,
-    recordNewVariantShown,
-    disablePopupsFor,
-    getAvailableVariants,
-    getCurrentPopupVariant,
-    setCurrentPopupVariant,
-    getDismissCount,
-    incrementDismissCount
+    recordPopupShown
 } from '../utils/popupConfig';
 
 /**
- * Custom hook for managing random popup behavior
- * New behavior:
- * - Same popup repeats every 5 seconds until user clicks "Got it"
- * - Close/backdrop/refresh keeps same popup coming back
- * - "Got it" dismisses variant and moves to next with incremental delay (5s, 10s, 15s...)
+ * Custom hook for managing single welcome popup
+ * Behavior:
+ * - Shows once after 15 seconds of login
+ * - Only shows when user is logged in
+ * - Can be dismissed permanently
  */
 export const useRandomPopup = ({
-    enabled = POPUP_CONFIG.ENABLED
+    enabled = POPUP_CONFIG.ENABLED,
+    isLoggedIn = false
 } = {}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [timeoutId, setTimeoutId] = useState(null);
+    const [hasShownPopup, setHasShownPopup] = useState(false);
 
-    // Schedule the same popup to repeat every 5 seconds until dismissed
-    const scheduleRepeatPopup = useCallback(() => {
-        if (!enabled || !shouldShowPopup()) {
-            return;
-        }
-
-        // Check if there are any available variants
-        const availableVariants = getAvailableVariants(4);
-        if (availableVariants.length === 0) {
-            return; // No variants available, stop scheduling
-        }
-
-        const id = setTimeout(() => {
-            if (shouldShowPopup()) {
-                setIsOpen(true);
-                // Don't record popup shown for repeating same popup
-            }
-        }, 5000); // Always 5 seconds for repeating same popup
-
-        setTimeoutId(id);
-    }, [enabled]);
-
-    // Schedule next different popup with incremental delay
-    const scheduleNextVariant = useCallback(() => {
-        if (!enabled || !shouldShowPopup()) {
-            return;
-        }
-
-        const availableVariants = getAvailableVariants(4);
-        if (availableVariants.length === 0) {
-            return; // No variants available, stop scheduling
-        }
-
-        // Set next available variant
-        const currentVariant = getCurrentPopupVariant(4);
-        const nextVariantIndex = availableVariants.find(v => v !== currentVariant) || availableVariants[0];
-        setCurrentPopupVariant(nextVariantIndex);
-
-        // Calculate incremental delay: 5s, 10s, 15s, 20s...
-        const dismissCount = getDismissCount();
-        const delay = 5000 + (dismissCount * 5000); // 5s + (count * 5s)
-
-        const id = setTimeout(() => {
-            if (shouldShowPopup()) {
-                setIsOpen(true);
-                recordNewVariantShown(); // Record only when showing new variant
-            }
-        }, delay);
-
-        setTimeoutId(id);
-    }, [enabled]); // Close popup (X button, backdrop, escape) - same popup will repeat
+    // Close popup (X button, backdrop, escape)
     const close = useCallback(() => {
         if (timeoutId) {
             clearTimeout(timeoutId);
             setTimeoutId(null);
         }
         setIsOpen(false);
-        // Schedule the same popup to appear again in 5 seconds
-        scheduleRepeatPopup();
-    }, [timeoutId, scheduleRepeatPopup]);
+    }, [timeoutId]);
 
-    // Dismiss popup with "Got it" - move to next variant with incremental delay
+    // Dismiss popup with "Got it" - permanently dismiss
     const dismiss = useCallback(() => {
         if (timeoutId) {
             clearTimeout(timeoutId);
             setTimeoutId(null);
         }
         setIsOpen(false);
-
-        // Increment dismiss count for incremental delays
-        incrementDismissCount();
-
-        // Schedule next variant with incremental delay
-        scheduleNextVariant();
-    }, [timeoutId, scheduleNextVariant]);
+        recordPopupShown(); // Mark as permanently dismissed
+        setHasShownPopup(true);
+    }, [timeoutId]);
 
     const disable = useCallback(() => {
         if (timeoutId) {
@@ -108,50 +48,34 @@ export const useRandomPopup = ({
         setIsOpen(false);
     }, [timeoutId]);
 
-    const snooze = useCallback((durationMs = 3600000) => { // Default 1 hour
-        disablePopupsFor(durationMs);
-        setIsOpen(false);
-        disable();
-    }, [disable]);
-
-    const enable = useCallback(() => {
-        scheduleRepeatPopup();
-    }, [scheduleRepeatPopup]);
-
     const showNow = useCallback(() => {
-        if (shouldShowPopup()) {
-            // Check if there are any available variants
-            const availableVariants = getAvailableVariants(4);
-            if (availableVariants.length > 0) {
-                setIsOpen(true);
-                recordNewVariantShown(); // Record as new variant when manually triggered
-            }
+        if (enabled && isLoggedIn && shouldShowPopup() && !hasShownPopup) {
+            setIsOpen(true);
         }
-    }, []);
+    }, [enabled, isLoggedIn, hasShownPopup]);
 
-    // Initial popup scheduling
+    // Schedule popup after login
     useEffect(() => {
-        if (!enabled) {
+        if (!enabled || !isLoggedIn || hasShownPopup || !shouldShowPopup()) {
             return;
         }
 
-        // Start with initial delay
-        const initialTimeoutId = setTimeout(() => {
-            if (shouldShowPopup()) {
-                const availableVariants = getAvailableVariants(4);
-                if (availableVariants.length > 0) {
-                    // Set first available variant as current
-                    setCurrentPopupVariant(availableVariants[0]);
-                    setIsOpen(true);
-                    recordNewVariantShown(); // Record initial variant as new
-                }
+        // Schedule popup to show after 15 seconds of login
+        const id = setTimeout(() => {
+            if (enabled && isLoggedIn && shouldShowPopup() && !hasShownPopup) {
+                setIsOpen(true);
+                setHasShownPopup(true);
             }
-        }, 5000);
+        }, POPUP_CONFIG.INITIAL_DELAY);
+
+        setTimeoutId(id);
 
         return () => {
-            clearTimeout(initialTimeoutId);
+            clearTimeout(id);
         };
-    }, [enabled]);    // Cleanup timeoutId on unmount
+    }, [enabled, isLoggedIn, hasShownPopup]);
+
+    // Cleanup timeoutId on unmount
     useEffect(() => {
         return () => {
             if (timeoutId) {
@@ -165,8 +89,6 @@ export const useRandomPopup = ({
         close,
         dismiss,
         disable,
-        enable,
-        snooze,
         showNow,
         isEnabled: enabled
     };

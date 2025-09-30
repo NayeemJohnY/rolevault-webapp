@@ -3,16 +3,15 @@
  */
 export const POPUP_CONFIG = {
     // Timing configuration (in milliseconds)
-    MIN_DELAY: 10000,      // 5 seconds minimum between popups
-    MAX_DELAY: 15000,     // 10 seconds maximum between popups  
-    INITIAL_DELAY: 10000,  // 5 seconds before first popup appears
+    INITIAL_DELAY: 15000,  // 15 seconds after login before popup appears
+    LOGGED_IN_ONLY: true,  // Only show popup when user is logged in
 
     // Feature toggles
-    ENABLED: true,        // Set to false to disable random popups globally
+    ENABLED: true,         // Set to false to disable popup globally
 
     // Display configuration
-    SHOW_ON_LOGIN: false, // Whether to show popup immediately after login
-    MAX_POPUPS_PER_SESSION: 5, // Maximum number of popups per browser session
+    SHOW_ONCE_PER_SESSION: true, // Show only once per login session
+    MAX_POPUPS_PER_SESSION: 1,   // Maximum 1 popup per session
 
     // Storage keys for remembering user preferences
     STORAGE_KEY: 'rolevault_popup_prefs',

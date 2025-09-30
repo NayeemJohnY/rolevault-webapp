@@ -22,34 +22,44 @@ import { useRandomPopup } from './hooks/useRandomPopup';
 
 import './index.css';
 
-function App() {
-  // Use default production timing from POPUP_CONFIG
-  const popup = useRandomPopup();
+// App content component to access auth context
+function AppContent() {
+  const { user } = useAuth();
+  const popup = useRandomPopup({
+    enabled: true,
+    isLoggedIn: !!user
+  });
 
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'var(--toast-bg)',
+            color: 'var(--toast-color)',
+          },
+        }}
+      />
+      <AppRoutes />
+
+      {/* Welcome Popup - Shows once after login */}
+      <RandomPopup
+        isOpen={popup.isOpen}
+        onClose={popup.close}
+        onDismiss={popup.dismiss}
+      />
+    </div>
+  );
+}
+
+function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--toast-bg)',
-                  color: 'var(--toast-color)',
-                },
-              }}
-            />
-            <AppRoutes />
-
-            {/* Random Popup Overlay */}
-            <RandomPopup
-              isOpen={popup.isOpen}
-              onClose={popup.close}
-              onDismiss={popup.dismiss}
-            />
-          </div>
+          <AppContent />
         </Router>
       </AuthProvider>
     </ThemeProvider>
@@ -69,6 +79,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+
       {/* Public routes */}
       <Route
         path="/login"

@@ -1,76 +1,39 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { getAvailableVariants, markVariantAsDismissed, getCurrentPopupVariant } from '../utils/popupConfig';
-
-// Different popup content variants (3 variants for focused user experience)
-const popupVariants = [
-    {
-        icon: '🎉',
-        title: 'Welcome to RoleVault!',
-        message: 'Thanks for using RoleVault! This popup appears randomly to showcase dynamic content delivery.',
-        tip: '💡 Tip: You can manage users, upload files, and handle requests all from your dashboard!',
-        bgColor: 'bg-blue-100 dark:bg-blue-900',
-        tipBg: 'bg-blue-50 dark:bg-blue-900/20',
-        tipText: 'text-blue-800 dark:text-blue-200'
-    },
-    {
-        icon: '🚀',
-        title: 'Boost Your Productivity!',
-        message: 'Did you know you can use API keys to automate your workflows? Check out the API Keys section!',
-        tip: '⚡ Pro Tip: Use drag & drop to rearrange your dashboard widgets for better organization.',
-        bgColor: 'bg-green-100 dark:bg-green-900',
-        tipBg: 'bg-green-50 dark:bg-green-900/20',
-        tipText: 'text-green-800 dark:text-green-200'
-    },
-    {
-        icon: '🔐',
-        title: 'Security First!',
-        message: 'RoleVault uses JWT authentication and role-based access control to keep your data secure.',
-        tip: '🛡️ Security Tip: Regular password updates and proper role management enhance your security posture.',
-        bgColor: 'bg-purple-100 dark:bg-purple-900',
-        tipBg: 'bg-purple-50 dark:bg-purple-900/20',
-        tipText: 'text-purple-800 dark:text-purple-200'
-    }
-];
+// Single popup variant for welcome message
+const popupVariant = {
+    icon: '🎉',
+    title: 'Welcome to RoleVault!',
+    message: 'Thanks for logging in to RoleVault! Explore your dashboard to manage users, files, and requests efficiently.',
+    tip: '💡 Tip: You can manage users, upload files, and handle requests all from your dashboard!',
+    bgColor: 'bg-blue-100 dark:bg-blue-900',
+    tipBg: 'bg-blue-50 dark:bg-blue-900/20',
+    tipText: 'text-blue-800 dark:text-blue-200'
+};
 
 const RandomPopup = ({ isOpen, onClose, onDismiss }) => {
-    const [currentVariant, setCurrentVariant] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
 
-    // Use the current variant from localStorage instead of random selection
+    // Animation effect when popup opens
     useEffect(() => {
         if (isOpen) {
-            const availableVariants = getAvailableVariants(popupVariants.length);
-            if (availableVariants.length > 0) {
-                // Get current variant from config instead of random
-                const currentVar = getCurrentPopupVariant(popupVariants.length);
-                if (availableVariants.includes(currentVar)) {
-                    setCurrentVariant(currentVar);
-                } else {
-                    setCurrentVariant(availableVariants[0]);
-                }
-                setIsAnimating(true);
-            } else {
-                // No variants available, close popup
-                onClose();
-            }
+            setIsAnimating(true);
         }
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     // Handle close (X button) - popup can show again
     const handleClose = useCallback(() => {
         onClose();
     }, [onClose]);
 
-    // Handle Got it - mark variant as dismissed and use dismiss function
+    // Handle Got it - permanently dismiss popup
     const handleGotIt = useCallback(() => {
-        markVariantAsDismissed(currentVariant);
         if (onDismiss) {
             onDismiss();
         } else {
             onClose();
         }
-    }, [currentVariant, onClose, onDismiss]);
+    }, [onClose, onDismiss]);
 
 
 
@@ -90,7 +53,7 @@ const RandomPopup = ({ isOpen, onClose, onDismiss }) => {
 
     if (!isOpen) return null;
 
-    const variant = popupVariants[currentVariant];
+    const variant = popupVariant;
 
     return (
         <div
