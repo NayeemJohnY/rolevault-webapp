@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import NotFound from './pages/NotFound';
 import { Toaster, toast, ToastBar } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -14,6 +15,7 @@ import Requests from './pages/Requests';
 import MyRequests from './pages/MyRequests';
 import RequestForm from './pages/RequestForm';
 import ApiHealth from './pages/ApiHealth';
+import DocsGettingStarted from './pages/DocsGettingStarted';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -117,6 +119,7 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="docs/getting-started" element={<DocsGettingStarted />} />
 
         {/* Profile route - only ProfileInformation */}
         <Route path="profile" element={<ProfileInformation />} />
@@ -176,8 +179,8 @@ function AppRoutes() {
         } />
       </Route>
 
-      {/* Catch all */}
-      <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+      {/* Catch all - show NotFound page */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

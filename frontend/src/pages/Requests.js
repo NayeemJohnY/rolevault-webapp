@@ -92,10 +92,14 @@ const Requests = () => {
   }
 
   return (
-  <div className="page-requests-management requests-management-page max-w-7xl mx-auto p-6" data-testid="requests">
+    <div className="page-requests-management requests-management-page max-w-7xl mx-auto p-6" data-testid="requests">
       <h1 className="page-requests-management__title page-title text-2xl font-bold text-gray-900 dark:text-white mb-6">
         Requests Management
       </h1>
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Help: <a href={`${window.location.origin}/help/requests`} className="underline mr-2">Requests Guide</a>
+        <a href="/help/unknown" className="underline">Broken Help</a>
+      </div>
 
       {/* Search and Filter Controls */}
       <DataTableSearchFilter

@@ -139,6 +139,10 @@ const ApiKeyManagement = () => {
           <PlusIcon className="w-5 h-5" />
           <span>Create API Key</span>
         </button>
+        <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          Docs: <a href="docs/apikeys" className="underline mr-2">API Key Docs</a>
+          <a href={`${window.location.origin}/docs/missing`} className="underline">Broken Docs</a>
+        </div>
       </div>
 
       {/* Search and Filter Controls */}

@@ -15,6 +15,10 @@ const Profile = () => {
         <p className="text-gray-600 dark:text-gray-400">
           Manage your files and preferences
         </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Quick links: <a href={`${window.location.origin}/upload`} className="underline mr-2">Upload</a>
+          <a href="https://not-a-valid-url" className="underline">Broken External</a>
+        </p>
       </div>
 
       {/* Tab navigation */}

@@ -101,6 +101,10 @@ const Header = ({ onMenuClick, sidebarCollapsed }) => {
             <h1 className="app-header__title text-xl lg:text-2xl font-bold text-primary-700 dark:text-primary-300 tracking-tight" data-testid="page-header-logo">
               My Vault
             </h1>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <a href={`${window.location.origin}/dashboard`} className="mr-3 underline">Dashboard</a>
+              <a href={`${window.location.origin}/non-existent-link`} className="underline">Broken Link</a>
+            </div>
           </div>
         </div>
 

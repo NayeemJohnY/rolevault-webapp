@@ -252,6 +252,12 @@ const Dashboard = () => {
                   <span className="text-blue-700 dark:text-blue-300 font-medium">{action.label || action.title}</span>
                 </a>
               ))}
+              {/* Extra helpful links */}
+              <div className="w-full mt-4 text-sm text-gray-500 dark:text-gray-400">
+                Helpful: <a href="/profile" className="underline mr-2">Profile</a>
+                <a href={`${window.location.origin}/broken/dashboard-help`} className="underline mr-2">Broken Help</a>
+                <a href={`${window.location.origin}/docs/getting-started`} className="underline">Getting Started</a>
+              </div>
             </div>
           </div>
 

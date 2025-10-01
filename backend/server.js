@@ -62,7 +62,13 @@ app.use('/api/files', fileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/roles', rolesRoutes);
+
 app.use(apiHealthRoutes);
+
+// 404 handler for broken links
+app.get(['/broken/*', '/docs/missing', '/help/broken-welcome', '/help/unknown', '/non-existent-link'], (req, res) => {
+  res.status(404).send('Not Found');
+});
 
 // Always serve static frontend files for all non-API routes
 app.use(express.static(path.join(__dirname, '../frontend/build')));
