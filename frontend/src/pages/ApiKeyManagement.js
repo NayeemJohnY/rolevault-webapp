@@ -122,23 +122,26 @@ const ApiKeyManagement = () => {
   return (
     <div className="page-apikey-management api-key-management-page space-y-6">
       {/* Page header */}
-      <div className="page-apikey-management__header page-header flex justify-between items-center">
-        <div>
-          <h1 className="page-apikey-management__title page-title text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            API Key Management
-          </h1>
-          <p className="page-apikey-management__description page-description text-gray-600 dark:text-gray-400">
-            {canViewAllAPIKeys() ? 'Manage all API keys' : 'Manage your API keys'}
-          </p>
+      <div className="page-apikey-management__header page-header bg-white dark:bg-gray-800 rounded-lg shadow-floating dark:shadow-glass p-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 pointer-events-none"></div>
+        <div className="relative z-10 flex justify-between items-center">
+          <div>
+            <h1 className="page-apikey-management__title page-title text-2xl font-bold text-gray-900 dark:text-white mb-6 drop-shadow-sm">
+              API Key Management
+            </h1>
+            <p className="page-apikey-management__description page-description text-gray-600 dark:text-gray-400">
+              {canViewAllAPIKeys() ? 'Manage all API keys' : 'Manage your API keys'}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="page-apikey-management__create-btn create-key-button btn-primary flex items-center space-x-2 shadow-depth hover:shadow-glow hover:scale-[1.02] transition-all duration-300"
+            data-testid="create-api-key-btn"
+          >
+            <PlusIcon className="w-5 h-5 drop-shadow-sm" />
+            <span>Create API Key</span>
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="page-apikey-management__create-btn create-key-button btn-primary flex items-center space-x-2"
-          data-testid="create-api-key-btn"
-        >
-          <PlusIcon className="w-5 h-5" />
-          <span>Create API Key</span>
-        </button>
         <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           Docs: <a href="docs/apikeys" className="underline mr-2">API Key Docs</a>
           <a href={`${window.location.origin}/docs/missing`} className="underline">Broken Docs</a>

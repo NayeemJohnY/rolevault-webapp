@@ -223,40 +223,46 @@ const Dashboard = () => {
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
           {/* Welcome Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2" data-testid="welcome-message">
-              {getGreeting()}, {user?.name || 'User'}!
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Welcome to your dashboard. You have{' '}
-              <span className="font-semibold">
-                {canManageUsers() ? 'Administrative' : canUploadFiles() ? 'Contributor' : 'Viewer'}
-              </span>{' '}
-              access.
-            </p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-floating dark:shadow-glass backdrop-blur-sm p-6 mb-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 pointer-events-none"></div>
+            <div className="relative z-10">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 drop-shadow-sm" data-testid="welcome-message">
+                {getGreeting()}, {user?.name || 'User'}! 👋
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Welcome to your dashboard. You have{' '}
+                <span className="font-semibold">
+                  {canManageUsers() ? 'Administrative' : canUploadFiles() ? 'Contributor' : 'Viewer'}
+                </span>{' '}
+                access.
+              </p>
+            </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              {getQuickActions().map((action, index) => (
-                <a
-                  key={index}
-                  href={action.path}
-                  {...(action.external ? { target: '_blank', rel: 'noopener noreferrer', title: action.title } : {})}
-                  className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors min-w-[140px]"
-                  data-testid={`quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <span className="text-2xl">{action.icon}</span>
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">{action.label || action.title}</span>
-                </a>
-              ))}
-              {/* Extra helpful links */}
-              <div className="w-full mt-4 text-sm text-gray-500 dark:text-gray-400">
-                Helpful: <a href="/profile" className="underline mr-2">Profile</a>
-                <a href={`${window.location.origin}/broken/dashboard-help`} className="underline mr-2">Broken Help</a>
-                <a href={`${window.location.origin}/docs/getting-started`} className="underline">Getting Started</a>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-multi-layer dark:shadow-neumorphic-dark p-6 mb-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-700/20 dark:to-blue-900/10 pointer-events-none"></div>
+            <div className="relative z-10">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 drop-shadow-sm">Quick Actions</h2>
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                {getQuickActions().map((action, index) => (
+                  <a
+                    key={index}
+                    href={action.path}
+                    {...(action.external ? { target: '_blank', rel: 'noopener noreferrer', title: action.title } : {})}
+                    className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 shadow-depth hover:shadow-glow hover:scale-105 min-w-[140px] border border-blue-100/50 dark:border-blue-800/50"
+                    data-testid={`quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <span className="text-2xl drop-shadow-sm group-hover:scale-110 transition-transform duration-200">{action.icon}</span>
+                    <span className="text-blue-700 dark:text-blue-300 font-medium">{action.label || action.title}</span>
+                  </a>
+                ))}
+                {/* Extra helpful links */}
+                <div className="w-full mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  Helpful: <a href="/profile" className="underline mr-2">Profile</a>
+                  <a href={`${window.location.origin}/broken/dashboard-help`} className="underline mr-2">Broken Help</a>
+                  <a href={`${window.location.origin}/docs/getting-started`} className="underline">Getting Started</a>
+                </div>
               </div>
             </div>
           </div>

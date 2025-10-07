@@ -16,6 +16,8 @@ import MyRequests from './pages/MyRequests';
 import RequestForm from './pages/RequestForm';
 import ApiHealth from './pages/ApiHealth';
 import DocsGettingStarted from './pages/DocsGettingStarted';
+import DocumentationViewer from './pages/DocumentationViewer';
+import IframeDemo from './pages/IframeDemo';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -120,6 +122,8 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="docs/getting-started" element={<DocsGettingStarted />} />
+        <Route path="docs/viewer" element={<DocumentationViewer />} />
+        <Route path="iframe-demo" element={<IframeDemo />} />
 
         {/* Profile route - only ProfileInformation */}
         <Route path="profile" element={<ProfileInformation />} />

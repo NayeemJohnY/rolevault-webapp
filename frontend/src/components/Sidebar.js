@@ -98,10 +98,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl transition-all duration-500 ease-out transform
+      className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-floating dark:shadow-glass backdrop-blur-sm transition-all duration-500 ease-out transform
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${collapsed && !isHovered ? 'lg:w-20' : 'lg:w-64'} 
-        w-64`}
+        w-64 before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none dark:before:from-gray-700/20`}
       data-testid="sidebar"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -143,9 +143,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
                 to={item.href}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `group flex items-center text-sm font-medium rounded-lg transition-all duration-200 hover:scale-[1.02] ${isActive
-                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                  `group flex items-center text-sm font-medium rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-glow ${isActive
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 shadow-multi-layer border border-primary-200/50 dark:border-primary-700/50'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 hover:shadow-card-hover'
                   } ${collapsed && !isHovered ? 'lg:p-3 lg:justify-center lg:w-12 lg:h-12 lg:mx-auto px-3 py-2' : 'px-3 py-2'}`
                 }
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
@@ -169,10 +169,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
               <NavLink
                 to="/api/health"
                 title="API Health"
-                className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-200 hover:scale-110"
+                className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-200 hover:scale-110 hover:shadow-glow-green shadow-depth"
                 data-testid="sidebar-apihealth"
               >
-                <FaStethoscope className="w-5 h-5 text-green-700 dark:text-green-300" />
+                <FaStethoscope className="w-5 h-5 text-green-700 dark:text-green-300 drop-shadow-sm" />
               </NavLink>
             )}
             <a
@@ -180,20 +180,20 @@ const Sidebar = ({ isOpen, onClose, collapsed, setCollapsed, onHover }) => {
               target="_blank"
               rel="noopener noreferrer"
               title="LinkedIn"
-              className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-110"
+              className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-110 hover:shadow-glow shadow-depth"
               data-testid="sidebar-linkedin"
             >
-              <FaLinkedin className="w-5 h-5 text-blue-700 dark:text-blue-300" />
+              <FaLinkedin className="w-5 h-5 text-blue-700 dark:text-blue-300 drop-shadow-sm" />
             </a>
             <a
               href="https://github.com/NayeemJohnY"
               target="_blank"
               rel="noopener noreferrer"
               title="GitHub"
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110 hover:shadow-glow shadow-depth"
               data-testid="sidebar-github"
             >
-              <FaGithub className="w-5 h-5 text-gray-900 dark:text-white" />
+              <FaGithub className="w-5 h-5 text-gray-900 dark:text-white drop-shadow-sm" />
             </a>
           </div>
 
