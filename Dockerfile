@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y mongodb-org \
     && rm -rf /var/lib/apt/lists/*
 
+RUN npx -y playwright@1.56.0 install --with-deps
+
 # Set working directory
 WORKDIR /app
 
@@ -43,7 +45,7 @@ RUN chmod +x ./start-app.sh ./entrypoint.sh
 
 # Set default environment variables (will be overridden by container.env in GitHub Actions)
 ENV TESTENV=prod
-ENV MONGODB_URI=mongodb://localhost:27017/${TESTENV}rolevault-db
+ENV MONGODB_URI=mongodb://localhost:27017/${TESTENV}-rolevault-db
 ENV JWT_EXPIRE=7d
 ENV MAX_FILE_SIZE=10485760
 

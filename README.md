@@ -43,8 +43,6 @@ npm start
 
 ### Method 3: Manual setup (Step by step)
 
-### Method 3: Manual setup (Step by step)
-
 ```bash
 # 1. Install backend dependencies
 cd backend
@@ -97,11 +95,9 @@ JWT_EXPIRE=7d
 MAX_FILE_SIZE=10485760
 ```
 
-# Frontend
-cd frontend
-npm install
-npm start             # Start React frontend
-```
+## 🚀 Running the Application
+
+After setting up the environment variables, you can start the application using any of the methods mentioned in the Quick Start section above.
 
 **Access:** `http://localhost:5000`
 
