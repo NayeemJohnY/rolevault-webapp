@@ -22,7 +22,6 @@ COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 COPY start-app.sh ./
 COPY entrypoint.sh ./
-COPY scripts/ ./scripts/
 
 # Build frontend
 RUN cd frontend && npm run build
