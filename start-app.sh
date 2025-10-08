@@ -23,6 +23,14 @@ done
 
 echo "🚀 Starting RoleVault in $MODE mode..."
 
+# Set PORT based on TESTENV
+if [[ "${TESTENV:-prod}" == "staging" ]]; then
+    export PORT=5001
+    echo "🔧 Setting PORT to 5001 for staging environment"
+else
+    export PORT=5000
+    echo "🔧 Setting PORT to 5000 for production environment"
+fi
 
 # Install dependencies
 echo "📦 Installing dependencies..."
