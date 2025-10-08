@@ -53,8 +53,9 @@ if [[ "$SEED_DATA" == "true" ]]; then
     if npm run seed; then
         echo "✅ Database seeded successfully!"
     else
-        echo "❌ Database seeding failed!"
-        exit 1
+        echo "⚠️  Database seeding failed! Continuing without seeding..."
+        echo "💡 Make sure MongoDB service is running and accessible"
+        # Don't exit - continue starting the application
     fi
     cd ..
 fi
