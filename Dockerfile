@@ -41,13 +41,5 @@ ENV MAX_FILE_SIZE=10485760
 # Expose application ports only
 EXPOSE 5000 5001
 
-# Add health check that works for both staging (5001) and prod (5000)
-HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
-    CMD if [ "$TESTENV" = "staging" ]; then \
-            curl -f http://localhost:5001/api/health || exit 1; \
-        else \
-            curl -f http://localhost:5000/api/health || exit 1; \
-        fi
-
 # Use entrypoint to start application services
 ENTRYPOINT ["./start-app.sh", "--seed"]
