@@ -44,7 +44,6 @@ RUN chmod +x ./start-app.sh ./entrypoint.sh
 # Set default environment variables (will be overridden by container.env in GitHub Actions)
 ENV TESTENV=prod
 ENV MONGODB_URI=mongodb://localhost:27017/${TESTENV}rolevault-db
-ENV JWT_SECRET
 ENV JWT_EXPIRE=7d
 ENV MAX_FILE_SIZE=10485760
 
