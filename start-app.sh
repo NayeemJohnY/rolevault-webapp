@@ -23,14 +23,19 @@ done
 
 echo "🚀 Starting RoleVault in $MODE mode..."
 
-# Set PORT based on TESTENV
-echo "🔍 TESTENV is set to: ${TESTENV:-prod}"
-if [[ "${TESTENV:-prod}" == "staging" ]]; then
-    export PORT=5001
-    echo "🔧 Setting PORT to 5001 for staging environment"
+# Set PORT based on MODE/TESTENV
+if [[ "$MODE" == "dev" ]]; then
+    export PORT=3000
+    echo "🔧 Setting PORT to 3000 for development mode"
 else
-    export PORT=5000
-    echo "🔧 Setting PORT to 5000 for production environment"
+    echo "🔍 TESTENV is set to: ${TESTENV:-prod}"
+    if [[ "${TESTENV:-prod}" == "staging" ]]; then
+        export PORT=5001
+        echo "🔧 Setting PORT to 5001 for staging environment"
+    else
+        export PORT=5000
+        echo "🔧 Setting PORT to 5000 for production environment"
+    fi
 fi
 
 # Install dependencies
@@ -51,13 +56,7 @@ fi
 if [[ "$SEED_DATA" == "true" ]]; then
     echo "🌱 Seeding database..."
     cd backend
-    if npm run seed; then
-        echo "✅ Database seeded successfully!"
-    else
-        echo "⚠️  Database seeding failed! Continuing without seeding..."
-        echo "💡 Make sure MongoDB service is running and accessible"
-        # Don't exit - continue starting the application
-    fi
+    npm run seed;
     cd ..
 fi
 
