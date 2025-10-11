@@ -3,7 +3,8 @@ import { Outlet, NavLink } from 'react-router-dom';
 
 const Profile = () => {
   const tabs = [
-    { name: 'Profile Information', href: '/profile/profile-information' }
+    { name: 'Profile Information', href: '/profile/profile-information' },
+    { name: 'Two-Factor Authentication', href: '/profile/two-factor-auth' }
   ];
 
   return (

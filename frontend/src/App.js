@@ -8,7 +8,9 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import UploadFile from './pages/profile/UploadFile';
 import DownloadFile from './pages/profile/DownloadFile';
+import Profile from './pages/Profile';
 import ProfileInformation from './pages/profile/ProfileInformation';
+import TwoFactorAuth from './pages/profile/TwoFactorAuth';
 import UserManagement from './pages/admin/UserManagement';
 import ApiKeyManagement from './pages/ApiKeyManagement';
 import Requests from './pages/Requests';
@@ -126,7 +128,11 @@ function AppRoutes() {
         <Route path="iframe-demo" element={<IframeDemo />} />
 
         {/* Profile route - only ProfileInformation */}
-        <Route path="profile" element={<ProfileInformation />} />
+        <Route path="profile" element={<Profile />}>
+          <Route index element={<Navigate to="/profile/profile-information" replace />} />
+          <Route path="profile-information" element={<ProfileInformation />} />
+          <Route path="two-factor-auth" element={<TwoFactorAuth />} />
+        </Route>
 
         {/* Upload/Download as separate routes */}
         <Route path="upload" element={

@@ -33,7 +33,7 @@ const getPasswordScore = (pw) => {
 export default function Auth() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { login, register } = useAuth();
+    const { login, verifyTOTP, register } = useAuth();
 
     // Determine active tab from URL - no state needed
     const activeTab = location.pathname === '/register' ? 'register' : 'login';
@@ -52,6 +52,11 @@ export default function Auth() {
         confirmPassword: ''
     });
 
+    // TOTP verification state
+    const [totpRequired, setTotpRequired] = useState(false);
+    const [tempToken, setTempToken] = useState('');
+    const [totpCode, setTotpCode] = useState('');
+
     // Common state
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -63,6 +68,8 @@ export default function Auth() {
         navigate(tab === 'register' ? '/register' : '/login');
         setFieldErrors({});
         setGeneralError('');
+        setTotpRequired(false);
+        setTotpCode('');
     };
 
     const handleLoginSubmit = async (e) => {
@@ -71,13 +78,39 @@ export default function Auth() {
         setGeneralError('');
 
         const result = await login(loginData.email, loginData.password);
-        if (result.success) {
+
+        if (result.requiresTOTP) {
+            // TOTP verification required
+            setTotpRequired(true);
+            setTempToken(result.tempToken);
+            setLoading(false);
+        } else if (result.success) {
             navigate('/dashboard');
         } else {
             setGeneralError(result.error || 'Login failed');
         }
+    };
 
-        setLoading(false);
+    const handleTotpSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setGeneralError('');
+
+        const result = await verifyTOTP(tempToken, totpCode);
+
+        if (result.success) {
+           navigate('/dashboard');
+        } else {
+            setGeneralError(result.error || 'Invalid TOTP code');
+            setLoading(false);
+        }
+    };
+
+    const handleBackToLogin = () => {
+        setTotpRequired(false);
+        setTotpCode('');
+        setTempToken('');
+        setGeneralError('');
     };
 
     const handleRegisterSubmit = async (e) => {
@@ -184,111 +217,178 @@ export default function Auth() {
                     {/* Form Content */}
                     <div className="p-8">
                         {activeTab === 'login' ? (
-                            /* Login Form */
-                            <form onSubmit={handleLoginSubmit} className="space-y-6">
-                                <div>
-                                    <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Email Address
-                                    </label>
-                                    <input
-                                        id="login-email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        value={loginData.email}
-                                        onChange={handleLoginChange}
-                                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-                                        placeholder="Enter your email"
-                                        data-testid="login-email-input"
-                                    />
-                                </div>
+                            totpRequired ? (
+                                /* TOTP Verification Form */
+                                <form onSubmit={handleTotpSubmit} className="space-y-6">
+                                    <div className="text-center mb-6">
+                                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 mb-4">
+                                            <svg className="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                            Two-Factor Authentication
+                                        </h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            Enter the 6-digit code from your authenticator app
+                                        </p>
+                                    </div>
 
-                                <div>
-                                    <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Password
-                                    </label>
-                                    <div className="relative">
+                                    <div>
+                                        <label htmlFor="totp-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
+                                            Authentication Code
+                                        </label>
                                         <input
-                                            id="login-password"
-                                            name="password"
-                                            type={showPassword ? 'text' : 'password'}
-                                            autoComplete="current-password"
+                                            id="totp-code"
+                                            name="totpCode"
+                                            type="text"
+                                            maxLength="6"
+                                            pattern="[0-9]{6}"
+                                            autoComplete="off"
                                             required
-                                            value={loginData.password}
-                                            onChange={handleLoginChange}
-                                            className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-                                            placeholder="Enter your password"
-                                            data-testid="login-password-input"
+                                            value={totpCode}
+                                            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                                            placeholder="000000"
+                                            data-testid="totp-code-input"
+                                            autoFocus
                                         />
-                                        <button
-                                            type="button"
-                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            data-testid="toggle-password"
-                                        >
-                                            {showPassword ? (
-                                                <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                                            ) : (
-                                                <EyeIcon className="h-5 w-5 text-gray-400" />
-                                            )}
-                                        </button>
                                     </div>
-                                </div>
 
-                                {generalError && (
-                                    <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg" data-testid="form-error">
-                                        {generalError}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                    data-testid="login-submit"
-                                >
-                                    {loading ? <LoadingSpinner size="sm" /> : 'Sign In'}
-                                </button>
-
-                                {/* Test Accounts */}
-                                <div className="mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowTestAccounts(!showTestAccounts)}
-                                        className="w-full text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors duration-200"
-                                        data-testid="show-test-accounts"
-                                    >
-                                        {showTestAccounts ? 'Hide' : 'Show'} Test Accounts
-                                    </button>
-
-                                    {showTestAccounts && (
-                                        <div className="mt-4 space-y-2">
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                                                Quick login with test accounts:
-                                            </p>
-                                            {testAccounts.map((account) => (
-                                                <button
-                                                    key={account.email}
-                                                    type="button"
-                                                    onClick={() => loginWithTestAccount(account.email, account.password)}
-                                                    className="w-full text-left px-4 py-3 text-sm bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200"
-                                                    data-testid={`test-account-${account.role.toLowerCase()}`}
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="font-medium text-gray-900 dark:text-white">
-                                                            {account.role}
-                                                        </span>
-                                                        <span className="text-gray-500 dark:text-gray-400 text-xs">
-                                                            {account.email}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                    {generalError && (
+                                        <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg" data-testid="form-error">
+                                            {generalError}
                                         </div>
                                     )}
-                                </div>
-                            </form>
+
+                                    <div className="space-y-3">
+                                        <button
+                                            type="submit"
+                                            disabled={loading || totpCode.length !== 6}
+                                            className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                            data-testid="totp-verify-submit"
+                                        >
+                                            {loading ? <LoadingSpinner size="sm" /> : 'Verify & Sign In'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleBackToLogin}
+                                            disabled={loading}
+                                            className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+                                            data-testid="back-to-login"
+                                        >
+                                            Back to Login
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                /* Login Form */
+                                <form onSubmit={handleLoginSubmit} className="space-y-6">
+                                    <div>
+                                        <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            id="login-email"
+                                            name="email"
+                                            type="email"
+                                            autoComplete="email"
+                                            required
+                                            value={loginData.email}
+                                            onChange={handleLoginChange}
+                                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                                            placeholder="Enter your email"
+                                            data-testid="login-email-input"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                id="login-password"
+                                                name="password"
+                                                type={showPassword ? 'text' : 'password'}
+                                                autoComplete="current-password"
+                                                required
+                                                value={loginData.password}
+                                                onChange={handleLoginChange}
+                                                className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                                                placeholder="Enter your password"
+                                                data-testid="login-password-input"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                data-testid="toggle-password"
+                                            >
+                                                {showPassword ? (
+                                                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                                                ) : (
+                                                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {generalError && (
+                                        <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg" data-testid="form-error">
+                                            {generalError}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        data-testid="login-submit"
+                                    >
+                                        {loading ? <LoadingSpinner size="sm" /> : 'Sign In'}
+                                    </button>
+
+                                    {/* Test Accounts */}
+                                    <div className="mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTestAccounts(!showTestAccounts)}
+                                            className="w-full text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors duration-200"
+                                            data-testid="show-test-accounts"
+                                        >
+                                            {showTestAccounts ? 'Hide' : 'Show'} Test Accounts
+                                        </button>
+
+                                        {showTestAccounts && (
+                                            <div className="mt-4 space-y-2">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                                                    Quick login with test accounts:
+                                                </p>
+                                                {testAccounts.map((account) => (
+                                                    <button
+                                                        key={account.email}
+                                                        type="button"
+                                                        onClick={() => loginWithTestAccount(account.email, account.password)}
+                                                        className="w-full text-left px-4 py-3 text-sm bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200"
+                                                        data-testid={`test-account-${account.role.toLowerCase()}`}
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                                {account.role}
+                                                            </span>
+                                                            <span className="text-gray-500 dark:text-gray-400 text-xs">
+                                                                {account.email}
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            )
                         ) : (
                             /* Register Form */
                             <form onSubmit={handleRegisterSubmit} className="space-y-6">

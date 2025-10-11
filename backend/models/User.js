@@ -45,6 +45,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // TOTP (Two-Factor Authentication) fields
+  totpSecret: {
+    type: String,
+    default: null
+  },
+  totpEnabled: {
+    type: Boolean,
+    default: false
+  },
   // UI / profile fields used by frontend
   firstName: {
     type: String,

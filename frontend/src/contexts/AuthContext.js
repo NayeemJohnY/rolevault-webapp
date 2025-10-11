@@ -56,7 +56,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await axios.post('/api/auth/login', { email, password });
-      const { user: userData, token } = response.data;
+      const data = response.data;
+
+      // Check if TOTP verification is required
+      if (data.requiresTOTP) {
+        return {
+          success: false,
+          requiresTOTP: true,
+          tempToken: data.tempToken
+        };
+      }
+
+      // Normal login flow
+      const { user: userData, token } = data;
 
       localStorage.setItem('token', token);
       try {
@@ -70,6 +82,33 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyTOTP = async (tempToken, totpCode) => {
+    try {
+      const response = await axios.post('/api/auth/totp/verify-login', {
+        tempToken,
+        token: totpCode
+      });
+
+      const { user: userData, token } = response.data;
+
+      localStorage.setItem('token', token);
+      try {
+        localStorage.setItem('user_role', userData.role);
+        localStorage.setItem('user_permissions', JSON.stringify(userData.permissions || []));
+      } catch (e) {
+      }
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(userData);
+
+      toast.success(`Welcome back, ${userData.name}!`);
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Invalid TOTP code';
       toast.error(message);
       return { success: false, error: message };
     }
@@ -169,6 +208,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    verifyTOTP,
     register,
     logout,
     updateProfile,

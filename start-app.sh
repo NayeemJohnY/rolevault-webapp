@@ -24,6 +24,7 @@ done
 echo "🚀 Starting RoleVault in $MODE mode..."
 
 # Set PORT based on TESTENV
+echo "🔍 TESTENV is set to: ${TESTENV:-prod}"
 if [[ "${TESTENV:-prod}" == "staging" ]]; then
     export PORT=5001
     echo "🔧 Setting PORT to 5001 for staging environment"
