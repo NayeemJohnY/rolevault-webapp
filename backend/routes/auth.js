@@ -50,17 +50,14 @@ router.post('/register', validate('user'), handleAsync(async (req, res) => {
     user: user.toJSON(),
     token
   }, 'User registered successfully', 201);
-  log('POST /register', req.body);
-  log('Register failed: user exists', { email });
   log('Register successful:', { email });
 }));
 
 // Login user
 router.post('/login', validate('login'), handleAsync(async (req, res) => {
-  // Logging for debugging
-  log('Login attempt:', req.body);
-
   const { email, password } = req.body;
+
+  log('Login attempt:', { email });
 
   const user = await User.findOne({ email });
   if (!user || !user.isActive) {
@@ -122,7 +119,7 @@ router.put('/me', authenticate, validate('user', { isUpdate: true }), handleAsyn
   );
 
   sendSuccess(res, { user: user.toJSON() }, 'Profile updated successfully');
-  log('PUT /me', { userId: req.user._id, updates: req.body });
+  log('PUT /me', { userId: req.user._id, fields: Object.keys(updates) });
 }));
 
 // Logout (client-side handles token removal)

@@ -61,11 +61,11 @@ router.post('/', canManageUsers, validate('user'), handleAsync(async (req, res) 
   if (existingUser) {
     return sendError(res, 'User already exists with this email', 400);
   }
-  log('POST /users', req.body);
 
   const user = new User({ name, email, password, role });
   await user.save();
 
+  log('POST /users', { name, email, role });
   sendSuccess(res, { user: user.toJSON() }, 'User created successfully', 201);
 }));
 
@@ -85,8 +85,8 @@ router.put('/:id', canManageUsers, validate('user', { isUpdate: true }), handleA
   if (!user) {
     return sendError(res, 'User not found', 404);
   }
-  log('PUT /users/:id', { params: req.params, updates: req.body });
 
+  log('PUT /users/:id', { userId: req.params.id, fields: Object.keys(updates) });
   sendSuccess(res, { user }, 'User updated successfully');
 }));
 
